@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Factory HR & Payroll ERP - Pro Suite v49 (Long-Term 30-Day Edition)</title>
+  <title>Factory HR & Payroll ERP - Pro Suite v52 (Absent Since Date Fix)</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -89,7 +89,7 @@
 <body>
 
 <header>
-  <h1>🏭 Factory HR & Payroll ERP - Pro Suite v49 <span style="font-size:12px; background:rgba(255,255,255,0.2); padding:3px 8px; border-radius:6px; margin-left:6px;">30-Day Standard Engine</span></h1>
+  <h1>🏭 Factory HR & Payroll ERP - Pro Suite v52 <span style="font-size:12px; background:rgba(255,255,255,0.2); padding:3px 8px; border-radius:6px; margin-left:6px;">Absent Since Date Fixed</span></h1>
   <div class="nav-tabs">
     <button class="active" onclick="switchTab('dashTab', this)">1. Dashboard</button>
     <button onclick="switchTab('attTab', this)">2. Attendance Logs</button>
@@ -678,8 +678,7 @@
   let logSortAsc = true;
   let smartManualLogCandidates = [];
 
-  // Migrate data seamlessly from v48 if available
-  let savedData = localStorage.getItem('factory_erp_pro_v49') || localStorage.getItem('factory_erp_pro_v48');
+  let savedData = localStorage.getItem('factory_erp_pro_v52') || localStorage.getItem('factory_erp_pro_v51') || localStorage.getItem('factory_erp_pro_v50') || localStorage.getItem('factory_erp_pro_v49');
   let db = savedData ? JSON.parse(savedData) : {
     employees: {
       "1": {id:"1", name:"Atif Javed", position:"Packer", shift:"Day Shift", hiredDate:"2026-09-04", leftDate:"", category:"Junior", salary:24000, openingPending:4, status:"Active"},
@@ -763,7 +762,7 @@
   async function saveDB() {
     try {
       db.rawPunches = rawPunchesMem;
-      localStorage.setItem('factory_erp_pro_v49', JSON.stringify(db));
+      localStorage.setItem('factory_erp_pro_v52', JSON.stringify(db));
       if (supabaseClient) {
         await supabaseClient.from('factory_state').upsert({ id: 'main_db', data: db, updated_at: new Date() });
       }
@@ -798,17 +797,13 @@
     refreshDashboard();
   }
 
-  // --- DYNAMIC SHIFT RESOLUTION FOR ANY DATE ---
   function getEffectiveShiftForDate(empId, dateStr) {
     const emp = db.employees[empId] || { shift: 'Day Shift' };
     let activeShift = emp.shift || 'Day Shift';
-
     if (db.shiftHistory && db.shiftHistory.length > 0) {
-      // Find all applicable shift changes for this employee or ALL employees sorted chronologically
       const applicable = db.shiftHistory
         .filter(h => (h.targetId === 'ALL' || String(h.targetId) === String(empId)) && h.effectiveDate <= dateStr)
         .sort((a, b) => a.effectiveDate.localeCompare(b.effectiveDate));
-      
       if (applicable.length > 0) {
         activeShift = applicable[applicable.length - 1].newShift;
       }
@@ -839,7 +834,6 @@
     if (!db.shiftHistory) db.shiftHistory = [];
 
     if (target === 'ALL') {
-      // Swap rotational Day Shift <-> Night Shift workers (keep p/d and p/n untouched)
       getActiveEmployees().forEach(emp => {
         if (emp.shift === 'Day Shift') {
           emp.shift = 'Night Shift';
@@ -867,15 +861,11 @@
       }
     }
 
-    // Re-evaluate attendance punches with new shift schedule!
-    if (rawPunchesMem.length > 0) {
-      reconstructShiftsExcludingOffDays();
-    }
-
+    if (rawPunchesMem.length > 0) reconstructShiftsExcludingOffDays();
     saveDB();
     renderShiftHistory();
     refreshDashboard();
-    alert(`Shift successfully updated effective from ${effDate}! System ne punches ko bhi auto-adjust kar diya hai.`);
+    alert(`Shift successfully updated effective from ${effDate}!`);
   }
 
   function renderShiftHistory() {
@@ -1013,7 +1003,6 @@
         if (headerIdx === -1) headerIdx = 0;
 
         const punchMap = new Map();
-        // Keep existing punches so multi-month / multi-year data persists long-term
         rawPunchesMem.forEach(p => punchMap.set(`${p.id}_${p.ts}`, p));
         let count = 0;
 
@@ -1062,13 +1051,12 @@
         rawPunchesMem = Array.from(punchMap.values()).sort((a, b) => a.ts - b.ts);
         reconstructShiftsExcludingOffDays();
         saveDB(); refreshDashboard();
-        alert(`Successfully imported ${count} punches! (All months & years supported)`);
+        alert(`Successfully imported ${count} punches!`);
       } catch (err) { alert('Error: ' + err.message); }
     };
     reader.readAsArrayBuffer(file);
   }
 
-  // --- AUTO-HANDLE SHIFT DETECTION INCLUDING MID-MONTH SHIFT CHANGES ---
   function reconstructShiftsExcludingOffDays() {
     const byEmp = {};
     rawPunchesMem.forEach(p => {
@@ -1088,7 +1076,6 @@
         const effectiveShift = getEffectiveShiftForDate(empId, curr.dateStr).toLowerCase();
         const isNightOnDate = effectiveShift.includes('p/n') || effectiveShift.includes('night');
 
-        // Case 1: Night Shift (Evening Check-In >= 15:00 to Next Morning Check-Out <= 12:00)
         if (isNightOnDate) {
           if (next && curr.timeStr >= '15:00:00' && next.timeStr <= '12:00:00') {
             const diffHrs = (next.ts - curr.ts) / 3600000;
@@ -1138,7 +1125,6 @@
           }
           i += 1;
         } else {
-          // Case 2: Day Shift (Same-Day Check-In and Check-Out, or 18-hr transition)
           const sameDayPunches = [];
           let j = i;
           while (j < punches.length && punches[j].dateStr === curr.dateStr) {
@@ -1166,7 +1152,6 @@
             }
           }
 
-          // Single punch on Day shift
           const p = sameDayPunches[0];
           const isOut = p.timeStr >= '14:00:00';
           results.push({
@@ -1239,11 +1224,10 @@
     });
     document.getElementById('statMonthLeave').textContent = totalMonthLeavesCount;
 
-    // --- FINANCIAL SUMMARY CALCULATIONS (STRICT 30-DAY STANDARD) ---
     let totalGross = 0, totalAdv = 0, totalDeductions = 0, netPayableSum = 0;
     activeEmps.forEach(emp => {
       const stats = getEmpStats(emp.id, m);
-      const perDay = emp.salary / 30; // ALWAYS 30 DAYS
+      const perDay = emp.salary / 30;
       const adv = getTotalAdvanceForMonth(emp.id, m);
       const cut = stats.totalAbsents * perDay;
       let net = 0;
@@ -1271,14 +1255,13 @@
     populateEmployeeDropdowns();
   }
 
-  // --- UNIVERSAL 30-DAY SALARY & ATTENDANCE ENGINE (28, 29, 30, 31 DAY SAFE) ---
   function getEmpStats(empId, monthStr) {
     const emp = db.employees[empId] || {};
     const hireDate = emp.hiredDate || `${monthStr}-01`;
     let effectiveStart = hireDate > `${monthStr}-01` ? hireDate : `${monthStr}-01`;
 
     const [y, mm] = monthStr.split('-').map(Number);
-    const actualDaysInMonth = new Date(y, mm, 0).getDate(); // 28, 29, 30, or 31
+    const actualDaysInMonth = new Date(y, mm, 0).getDate();
     let monthEndStr = `${monthStr}-${String(actualDaysInMonth).padStart(2,'0')}`;
 
     let leftDate = emp.leftDate || '';
@@ -1323,9 +1306,6 @@
       }
     }
 
-    // STANDARD 30-DAY PAYROLL RULE:
-    // Regardless of whether month has 28, 29, 30, or 31 days, standard salary days = 30.
-    // Absents are calculated purely against actual working days in that month (so Feb 28 never adds 2 fake absents, and 31-day months never add 1 extra day).
     const standardSalaryDays = 30;
     presentDays = Math.min(presentDays, actualWorkingDays);
     
@@ -1333,13 +1313,10 @@
     let openingPending = Number(emp.openingPending) || 0;
     let currentMonthAllowedLeaves = 2;
 
-    if (presentDays === 0) {
-      currentAbsents = 30;
-      totalAbsents = 30;
-      openingPending = 0;
-      currentMonthAllowedLeaves = 0;
+    if (presentDays === 0 && actualWorkingDays === 0) {
+      currentAbsents = 0;
+      totalAbsents = 0;
     } else {
-      // If hired mid-month, account for days before hire date as non-working
       let preHireWorkingDays = 0;
       for (let d = 1; d < startD; d++) {
         const ds = `${monthStr}-${String(d).padStart(2,'0')}`;
@@ -1366,7 +1343,7 @@
     }
 
     return { 
-      workingDays: standardSalaryDays, // ALWAYS 30 DAYS
+      workingDays: standardSalaryDays, 
       presentDays, 
       weeklyOffs, 
       holidaysCount, 
@@ -1499,7 +1476,7 @@
 
     const emp = db.employees[empId] || {};
     const stats = getEmpStats(empId, m);
-    const perDay = emp.salary / 30; // STRICT 30 DAYS
+    const perDay = emp.salary / 30;
     const adv = getTotalAdvanceForMonth(empId, m);
     const cut = stats.totalAbsents * perDay;
     const net = stats.presentDays === 0 ? 0 : Math.max(0, Math.round(emp.salary - cut - adv));
@@ -1584,22 +1561,76 @@
     document.getElementById('shiftWorkersModal').style.display = 'flex';
   }
 
+  // --- ACCURATE ABSENT SINCE DATE & STREAK CALCULATOR ---
   function showTodayAbsentModal() {
     const filterDate = document.getElementById('filterDate').value;
     document.getElementById('todayModalDate').textContent = filterDate;
-    const presentIDs = getPresentIDsForDate(filterDate);
-    const activeEmps = getActiveEmployees().filter(e => !presentIDs.has(e.id));
+    
+    const m = filterDate.slice(0, 7);
+    const activeEmps = getActiveEmployees();
+    const dLimitObj = new Date(filterDate + 'T00:00:00');
 
-    document.getElementById('todayAbsentModalBody').innerHTML = activeEmps.map(e => `
-      <tr>
-        <td>${e.id}</td>
-        <td><strong>${e.name}</strong></td>
-        <td>${e.position}</td>
-        <td>${getEffectiveShiftForDate(e.id, filterDate)}</td>
-        <td style="color:var(--danger); font-weight:700;">${filterDate}</td>
-        <td><span class="badge b-miss" style="background:#fee2e2; color:#dc2626;">1 Day</span></td>
-      </tr>
-    `).join('');
+    let absentRows = [];
+
+    activeEmps.forEach(e => {
+      if (e.hiredDate && e.hiredDate > filterDate) return;
+
+      const presentIDs = getPresentIDsForDate(filterDate);
+      const isSunday = dLimitObj.getDay() === 0;
+      const isHol = (db.holidays || []).includes(filterDate);
+
+      if (!isSunday && !isHol && !presentIDs.has(e.id)) {
+        let streak = 0;
+        let checkDate = new Date(dLimitObj);
+        let actualAbsentSince = filterDate;
+        let maxLoops = 31; 
+        
+        while (maxLoops > 0) {
+          const ds = checkDate.toISOString().slice(0, 10);
+          if (ds < (e.hiredDate || `${m}-01`) || ds < `${m}-01`) break;
+          
+          const isSun = checkDate.getDay() === 0;
+          const isH = (db.holidays || []).includes(ds);
+          
+          if (!isSun && !isH) {
+            const pSet = getPresentIDsForDate(ds);
+            const manualSt = db.manualStatus[`${e.id}_${ds}`];
+            const wasPresent = pSet.has(e.id) || manualSt === 'Present';
+            if (!wasPresent) {
+              streak++;
+              actualAbsentSince = ds; // Track the earliest date in this continuous absent streak
+            } else {
+              break; 
+            }
+          }
+          checkDate.setDate(checkDate.getDate() - 1);
+          maxLoops--;
+        }
+
+        absentRows.push({
+          id: e.id,
+          name: e.name,
+          position: e.position,
+          shift: getEffectiveShiftForDate(e.id, filterDate),
+          absentSince: actualAbsentSince,
+          days: Math.max(1, streak)
+        });
+      }
+    });
+
+    document.getElementById('todayAbsentModalBody').innerHTML = absentRows.length === 0 
+      ? `<tr><td colspan="6" style="text-align:center; color:var(--muted);">No absent workers found for this date.</td></tr>`
+      : absentRows.map(r => `
+        <tr>
+          <td>${r.id}</td>
+          <td><strong>${r.name}</strong></td>
+          <td>${r.position}</td>
+          <td>${r.shift}</td>
+          <td style="color:var(--danger); font-weight:700;">${r.absentSince}</td>
+          <td><span class="badge b-miss" style="background:#fee2e2; color:#dc2626;">${r.days} Day${r.days > 1 ? 's' : ''}</span></td>
+        </tr>
+      `).join('');
+
     document.getElementById('todayAbsentModal').style.display = 'flex';
   }
 
@@ -1950,7 +1981,7 @@
       const list = getActiveEmployees().filter(e => e.category === cat).sort((a, b) => Number(a.id) - Number(b.id));
       tbody.innerHTML = list.map(emp => {
         const stats = getEmpStats(emp.id, m);
-        const perDay = emp.salary / 30; // ALWAYS 30 DAYS
+        const perDay = emp.salary / 30;
         const adv = getTotalAdvanceForMonth(emp.id, m);
         const net = stats.presentDays === 0 ? 0 : Math.max(0, Math.round(emp.salary - (stats.totalAbsents * perDay) - adv));
 
@@ -2107,7 +2138,7 @@
   function exportSalarySheet(cat) { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById(cat === 'Senior' ? 'seniorSalaryBody' : 'juniorSalaryBody').parentElement, { sheet: `${cat}_Salary` }), `${cat}_Salary.xlsx`); }
   function exportSundayDutyExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('sundayDutyBody').parentElement, { sheet: "Sunday_OT" }), "Sunday_OT.xlsx"); }
   function exportLeaveLedgerExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('ledgerTableBody').parentElement, { sheet: "Leave_Ledger" }), "Leave_Ledger.xlsx"); }
-  function resetSystemData() { if (confirm('⚠️ WARNING: Kya aap saara data reset karna chahte hain? Ye action wapas nahi ho sakta!')) { localStorage.removeItem('factory_erp_pro_v49'); localStorage.removeItem('factory_erp_pro_v48'); location.reload(); } }
+  function resetSystemData() { if (confirm('⚠️ WARNING: Kya aap saara data reset karna chahte hain? Ye action wapas nahi ho sakta!')) { localStorage.removeItem('factory_erp_pro_v52'); localStorage.removeItem('factory_erp_pro_v51'); localStorage.removeItem('factory_erp_pro_v50'); localStorage.removeItem('factory_erp_pro_v49'); location.reload(); } }
 
   loadCloudDB();
   refreshDashboard();
