@@ -1,0 +1,2116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Factory HR & Payroll ERP - Pro Suite v49 (Long-Term 30-Day Edition)</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-light: #2563eb;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #cbd5e1;
+      --success: #16a34a;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --night: #312e81;
+      --day: #c2410c;
+    }
+    * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text); }
+    header {
+      background: var(--primary); color: white; padding: 14px 24px;
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+      border-bottom: 3px solid #1d4ed8;
+    }
+    header h1 { margin: 0; font-size: 20px; }
+    .nav-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+    .nav-tabs button {
+      background: rgba(255,255,255,0.15); border: none; color: white;
+      padding: 7px 12px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 11px;
+    }
+    .nav-tabs button.active { background: white; color: var(--primary); }
+    .container { max-width: 1480px; margin: 20px auto; padding: 0 16px; }
+    .card {
+      background: var(--card); border-radius: 10px; padding: 18px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 18px; border: 1px solid var(--border);
+    }
+    .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 18px; }
+    .stat-box { 
+      background: white; padding: 16px; border-radius: 10px; border: 1px solid var(--border); border-left: 4px solid var(--primary-light); 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06); cursor: pointer; transition: transform 0.1s;
+    }
+    .stat-box:hover { transform: translateY(-2px); background: #f8fafc; }
+    .stat-box h3 { margin: 0 0 6px; font-size: 11px; color: var(--muted); text-transform: uppercase; }
+    .stat-box .val { font-size: 22px; font-weight: 700; }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+    input, select, button {
+      padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); font-size: 13px; background: white;
+    }
+    button.btn-primary { background: var(--primary-light); color: white; border: none; font-weight: 600; cursor: pointer; }
+    button.btn-success { background: var(--success); color: white; border: none; font-weight: 600; cursor: pointer; }
+    button.btn-danger { background: var(--danger); color: white; border: none; font-weight: 600; cursor: pointer; }
+    button.btn-warning { background: var(--warning); color: white; border: none; font-weight: 600; cursor: pointer; }
+    button:hover { opacity: 0.92; }
+    .table-wrap { overflow-x: auto; max-height: 650px; border: 1px solid var(--border); border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; background: white; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); border-right: 1px solid #f1f5f9; text-align: left; white-space: nowrap; }
+    th { background: #f8fafc; position: sticky; top: 0; z-index: 2; font-weight: 700; color: #334155; border-bottom: 2px solid var(--border); }
+    tr:hover { background: #f8fafc; }
+    .badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; display: inline-block; }
+    .b-day { background: #ffedd5; color: var(--day); }
+    .b-night { background: #e0e7ff; color: var(--night); }
+    .b-miss { background: #fee2e2; color: var(--danger); }
+    .b-ok { background: #dcfce7; color: var(--success); }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+    input.num-in { width: 75px; padding: 4px; text-align: right; }
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+      background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;
+    }
+    .modal-content { background: white; padding: 24px; border-radius: 10px; width: 1020px; max-width: 95%; max-height: 85vh; overflow-y: auto; border: 1px solid var(--border); }
+    .zk-card { border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 16px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+    .zk-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; margin-top: 8px; }
+    .zk-cell { border: 1px solid var(--border); padding: 5px; font-size: 11px; text-align: center; border-radius: 4px; background: #fafafa; }
+    .zk-cell.sun { background: #fef3c7; }
+    .zk-cell.late { background: #fee2e2; color: #b91c1c; font-weight: 700; }
+    .zk-cell.miss { background: #fee2e2; color: #dc2626; font-weight: 700; }
+    .zk-cell.ok-cell { background: #dcfce7; color: #16a34a; font-weight: 700; }
+    .summary-tag { font-size: 11px; background: #f1f5f9; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border); font-weight: 600; color: #334155; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🏭 Factory HR & Payroll ERP - Pro Suite v49 <span style="font-size:12px; background:rgba(255,255,255,0.2); padding:3px 8px; border-radius:6px; margin-left:6px;">30-Day Standard Engine</span></h1>
+  <div class="nav-tabs">
+    <button class="active" onclick="switchTab('dashTab', this)">1. Dashboard</button>
+    <button onclick="switchTab('attTab', this)">2. Attendance Logs</button>
+    <button onclick="switchTab('missTab', this)">3. Missing & Manual Logs</button>
+    <button onclick="switchTab('empTab', this)">4. Employees & Shifts</button>
+    <button onclick="switchTab('seniorTab', this)">5. Senior Salary</button>
+    <button onclick="switchTab('juniorTab', this)">6. Junior Salary</button>
+    <button onclick="switchTab('sundayTab', this)" style="background:#d97706;">7. Sunday Duty & OT</button>
+    <button onclick="switchTab('zkGridTab', this)" style="background:#0d9488;">8. ZKTeco Time Card</button>
+    <button onclick="switchTab('importTab', this)" style="background:#7c3aed;">9. Master & Import</button>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- TAB 1: DASHBOARD -->
+  <div id="dashTab" class="tab-pane active">
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 18px;">
+      <div class="stat-box" style="border-left-color: var(--primary);">
+        <h3>Total Gross Payroll</h3>
+        <div class="val" id="dashTotalGross" style="color: var(--primary);">Rs. 0</div>
+        <small>Standard 30-Day Basis</small>
+      </div>
+      <div class="stat-box" style="border-left-color: var(--warning);">
+        <h3>Total Advance Given</h3>
+        <div class="val" id="dashTotalAdvance" style="color: var(--warning);">Rs. 0</div>
+        <small>Current Month Advances</small>
+      </div>
+      <div class="stat-box" style="border-left-color: var(--danger);">
+        <h3>Total Deductions (Absents)</h3>
+        <div class="val" id="dashTotalDeductions" style="color: var(--danger);">Rs. 0</div>
+        <small>Unpaid Leave Cuts (Salary/30)</small>
+      </div>
+      <div class="stat-box" style="border-left-color: var(--success);">
+        <h3>Net Payable (To Staff)</h3>
+        <div class="val" id="dashNetPayable" style="color: var(--success);">Rs. 0</div>
+        <small>Final Cash / Bank Payout</small>
+      </div>
+    </div>
+
+    <div class="grid-4">
+      <div class="stat-box">
+        <h3>Payroll Month & Date</h3>
+        <div style="margin-top:4px; display:flex; flex-direction:column; gap:4px;">
+          <input type="month" id="globalMonth" value="2026-11" onchange="syncDateWithMonth(); refreshDashboard();" style="padding:3px; font-weight:700; width:100%;" />
+          <input type="date" id="filterDate" value="2026-11-24" onchange="refreshDashboard()" style="padding:3px; font-weight:700; width:100%;" />
+        </div>
+      </div>
+      <div class="stat-box" onclick="showActiveWorkersModal()" style="border-color:var(--success);">
+        <h3>Active / Present</h3>
+        <div class="val" id="statActiveToday" style="color:var(--success);">0</div>
+        <small>Click to view list</small>
+      </div>
+      <div class="stat-box" onclick="showTodayAbsentModal()" style="border-color:var(--danger);">
+        <h3>Absent Today</h3>
+        <div class="val" id="statTodayAbsent" style="color:var(--danger);">0</div>
+        <small>Click to view since-date</small>
+      </div>
+      <div class="stat-box" onclick="showLeavesSummaryModal()" style="border-color:var(--warning);">
+        <h3>Leaves Summary</h3>
+        <div class="val" id="statMonthLeave" style="color:var(--warning);">0</div>
+        <small>Taken vs Remaining Balance</small>
+      </div>
+      <div class="stat-box" onclick="showShiftWorkersModal('DAY')" style="border-color:var(--day);">
+        <h3>Day Shift (Active)</h3>
+        <div class="val" id="statDayShiftCount" style="color:var(--day);">0</div>
+        <small>Click to view Day workers</small>
+      </div>
+      <div class="stat-box" onclick="showShiftWorkersModal('NIGHT')" style="border-color:var(--night);">
+        <h3>Night Shift (Active)</h3>
+        <div class="val" id="statNightShiftCount" style="color:var(--night);">0</div>
+        <small>Click to view Night workers</small>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>📊 Smart Actions, Shift Management & Reports</h3>
+      <div class="controls">
+        <button class="btn-primary" style="background:#1d4ed8;" onclick="openShiftChangeModal()">🔄 Shift Change / Auto-Update</button>
+        <button class="btn-primary" style="background:#7c3aed;" onclick="openSmartManualLogModal()">📥 Smart ZKTeco Manual Log Generator</button>
+        <button class="btn-warning" onclick="showLeavesSummaryModal()">📊 Leaves Summary (Taken vs Remaining)</button>
+        <button class="btn-success" onclick="openSingleAdvanceModal()">💰 Add Advance</button>
+        <button class="btn-primary" style="background:#d97706;" onclick="openAdvanceLedgerModal()">📋 View Advance Ledger</button>
+        <button class="btn-primary" onclick="openLeaveLedgerModal()">📅 Date-wise Leave Ledger</button>
+        <button class="btn-warning" onclick="openHolidayModal()">➕ Manage Holidays</button>
+        <button class="btn-success" style="background:#25d366;" onclick="openWhatsAppAlertModal()">💬 WhatsApp Daily Report</button>
+        <button class="btn-primary" style="background:#0d9488;" onclick="openSalarySlipModal()">🖨️ Generate Salary Slip (PDF)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: ATTENDANCE LOGS -->
+  <div id="attTab" class="tab-pane">
+    <div class="card">
+      <div class="controls">
+        <input type="text" id="logSearch" placeholder="Search ID or Name..." oninput="renderAttendanceLogs()" style="flex:1;" />
+        <select id="logShiftFilter" onchange="renderAttendanceLogs()">
+          <option value="ALL">All Shifts</option>
+          <option value="DAY">Day Shift (6 AM - 6 PM)</option>
+          <option value="NIGHT">Night Shift (6 PM - 6 AM)</option>
+        </select>
+        <button class="btn-primary" onclick="toggleLogSortOrder()">🔤 Sort A-Z / Z-A</button>
+        <button class="btn-success" onclick="exportAttendanceLogsExcel()">📥 Export (.xlsx)</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th onclick="sortLogsBy('id')">ID ↕</th><th onclick="sortLogsBy('name')">Name ↕</th><th>Position</th><th>Shift Type</th><th>Date</th><th>Check-In</th><th>Check-Out</th><th>Total Hrs</th><th>Status</th></tr>
+          </thead>
+          <tbody id="attTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: MISSING & MANUAL STATUS FIXER -->
+  <div id="missTab" class="tab-pane">
+    <div class="card">
+      <div class="controls" style="justify-content:space-between;">
+        <h3 style="margin:0;">⚠️ Missing Punches & Manual Leave / Status Fixer</h3>
+        <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+          <input type="date" id="missingDateFilter" onchange="renderMissingPunches()" />
+          <button class="btn-primary" style="padding:6px 10px;" onclick="document.getElementById('missingDateFilter').value=''; renderMissingPunches();">All Dates</button>
+          <select id="missingTypeFilter" onchange="renderMissingPunches()" style="font-weight:700;">
+            <option value="ALL">All Missing & Leave Status</option>
+            <option value="In Missing">In Missing Only</option>
+            <option value="Out Missing">Out Missing Only</option>
+            <option value="Both Missing">Both Missing</option>
+            <option value="Medical Leave">Medical Leaves</option>
+            <option value="Absent">Explicit Absents</option>
+          </select>
+          <button class="btn-success" onclick="exportMissingExcel()">📥 Export</button>
+        </div>
+      </div>
+      <div class="table-wrap" style="margin-top:14px;">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Name</th><th>Date</th><th>Missing Type</th><th>Current Punches</th><th>Assign Status</th></tr>
+          </thead>
+          <tbody id="missingTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: EMPLOYEES & SHIFTS -->
+  <div id="empTab" class="tab-pane">
+    <div class="card">
+      <div class="controls" style="justify-content:space-between;">
+        <div style="display:flex; gap:10px; align-items:center;">
+          <input type="text" id="empSearch" placeholder="Search Employee..." oninput="renderEmployees()" />
+          <select id="empActiveFilter" onchange="renderEmployees()">
+            <option value="ACTIVE">Active Employees Only</option>
+            <option value="LEFT">Left Only</option>
+            <option value="ALL">All Employees</option>
+          </select>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button class="btn-primary" style="background:#1d4ed8;" onclick="openShiftChangeModal()">🔄 Bulk / Individual Shift Change</button>
+          <button class="btn-primary" onclick="openAddEmployeeModal()">➕ Add New Employee</button>
+          <button class="btn-success" onclick="saveEmployeeSettings()">💾 Save Changes</button>
+          <button class="btn-danger" style="background:#991b1b;" onclick="resetSystemData()">⚠️ Reset All Data</button>
+        </div>
+      </div>
+      <div class="table-wrap" style="margin-top:14px;">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Name</th><th>Position</th><th>Hired Date</th><th>Left Date</th><th>Current Shift</th><th>Category</th><th>Salary</th><th>Pending</th><th>Status</th></tr>
+          </thead>
+          <tbody id="empTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 5: SENIOR SALARY -->
+  <div id="seniorTab" class="tab-pane">
+    <div class="card">
+      <div class="controls">
+        <h3 style="margin:0;">👔 Senior Staff Salary Sheet (<span class="lblMonth"></span> — Standard 30 Days)</h3>
+        <button class="btn-success" onclick="exportSalarySheet('Senior')">Export Senior Salary (.xlsx)</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Name</th><th>Position</th><th>Basic</th><th>Salary Days</th><th>Present</th><th>Offs</th><th>Holidays</th><th>Medical</th><th>Opening</th><th>Allowed</th><th>Current Abs</th><th>Total Abs (Cut)</th><th>Advance</th><th>Net Payable</th></tr>
+          </thead>
+          <tbody id="seniorSalaryBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 6: JUNIOR SALARY -->
+  <div id="juniorTab" class="tab-pane">
+    <div class="card">
+      <div class="controls">
+        <h3 style="margin:0;">👷 Junior Staff Salary Sheet (<span class="lblMonth"></span> — Standard 30 Days)</h3>
+        <button class="btn-success" onclick="exportSalarySheet('Junior')">Export Junior Salary (.xlsx)</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Name</th><th>Position</th><th>Basic</th><th>Salary Days</th><th>Present</th><th>Offs</th><th>Holidays</th><th>Medical</th><th>Opening</th><th>Allowed</th><th>Current Abs</th><th>Total Abs (Cut)</th><th>Advance</th><th>Net Payable</th></tr>
+          </thead>
+          <tbody id="juniorSalaryBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 7: SUNDAY DUTY & OVERTIME -->
+  <div id="sundayTab" class="tab-pane">
+    <div class="card">
+      <div class="controls" style="justify-content:space-between;">
+        <h3 style="margin:0;">☀️ Sunday Duty & Overtime Management</h3>
+        <div style="display:flex; gap:10px;">
+          <select id="sundayStatusFilter" onchange="renderSundayDutyTable()" style="font-weight:700;">
+            <option value="PENDING">Pending Approval</option>
+            <option value="CONFIRMED">Confirmed / Paid</option>
+            <option value="ALL">All Sunday Duties</option>
+          </select>
+          <button class="btn-success" onclick="exportSundayDutyExcel()">📥 Export Sunday OT</button>
+        </div>
+      </div>
+      <div class="table-wrap" style="margin-top:14px;">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Name</th><th>Position</th><th>Date</th><th>Check-In</th><th>Check-Out</th><th>OT Amount (PKR)</th><th>Status</th><th>Action</th></tr>
+          </thead>
+          <tbody id="sundayDutyBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 8: ZKTECO MONTHLY TIME CARD GRID -->
+  <div id="zkGridTab" class="tab-pane">
+    <div class="card">
+      <div class="controls" style="justify-content:space-between; flex-wrap:wrap; gap:10px;">
+        <h3 style="margin:0;">📅 ZKTeco Monthly Time Card Grid (<span class="lblMonth"></span>)</h3>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <select id="zkGridShiftFilter" onchange="renderZKGridCards()" style="font-weight:700;">
+            <option value="ALL">All Shifts</option>
+            <option value="Day Shift">Day Shift</option>
+            <option value="Night Shift">Night Shift</option>
+            <option value="p/d">p/d (Permanent Day)</option>
+            <option value="p/n">p/n (Permanent Night)</option>
+          </select>
+          <input type="text" id="zkGridSearch" placeholder="Search Name or ID..." oninput="renderZKGridCards()" style="width:180px;" />
+          <button class="btn-success" onclick="exportZKGridExcel()">📥 Export Excel</button>
+          <button class="btn-danger" style="background:#dc2626;" onclick="exportZKGridPDF()">📥 Download Grid PDF</button>
+        </div>
+      </div>
+      <div id="zkGridContainer" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <!-- TAB 9: MASTER FILES & IMPORT -->
+  <div id="importTab" class="tab-pane">
+    <div class="card">
+      <h2 style="margin-top:0; color:var(--primary);">📂 Master Files & ZKTeco Data Import</h2>
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+        <div style="border: 2px dashed #93c5fd; padding: 14px; border-radius: 8px; background: #eff6ff;">
+          <strong>1. ZKTeco Attendance File (.xlsx)</strong>
+          <input type="file" id="attFileInput" accept=".xlsx,.xls,.csv" style="margin-top:8px; width:100%;" />
+          <button class="btn-primary" onclick="processAttendanceUpload()" style="margin-top:8px;">Import Attendance</button>
+        </div>
+        <div style="border: 2px dashed #86efac; padding: 14px; border-radius: 8px; background: #f0fdf4;">
+          <strong>2. Employee Master File (.xlsx)</strong>
+          <input type="file" id="empFileInput" accept=".xlsx,.xls,.csv" style="margin-top:8px; width:100%;" />
+          <button class="btn-success" onclick="importEmployeesExcel()" style="margin-top:8px;">Import Employee Master</button>
+        </div>
+        <div style="border: 2px dashed #fcd34d; padding: 14px; border-radius: 8px; background: #fffbeb;">
+          <strong>3. Advance / Loan Data (.xlsx)</strong>
+          <input type="file" id="advFileInput" accept=".xlsx,.xls,.csv" style="margin-top:8px; width:100%;" />
+          <button class="btn-primary" style="background:#d97706; margin-top:8px;" onclick="importAdvanceExcel()">Import Advances</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- SHIFT CHANGE / AUTO-HANDLE MODAL -->
+<div id="shiftChangeModal" class="modal">
+  <div class="modal-content" style="width: 780px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="margin:0; color:#1d4ed8;">🔄 Shift Change & Auto-Handle Manager</h3>
+      <button onclick="closeModal('shiftChangeModal')" class="btn-danger" style="padding:4px 8px;">X</button>
+    </div>
+    <p style="font-size:13px; color:var(--muted); margin-top:0;">
+      Jab bhi kisi worker ya poori team ki shift change ho, yahan date aur nayi shift select karein. System us date se pehle purani shift aur us date ke baad nayi shift ke hisab se punches ko khud handle karega!
+    </p>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; background:#f8fafc; padding:14px; border-radius:8px; border:1px solid var(--border); margin-bottom:16px;">
+      <label>Select Worker / Group:
+        <select id="scTargetSelect" style="width:100%; margin-top:4px; font-weight:700;"></select>
+      </label>
+      <label>Effective From Date:
+        <input type="date" id="scEffectiveDate" value="2026-11-16" style="width:100%; margin-top:4px; font-weight:700;" />
+      </label>
+      <label>New Shift:
+        <select id="scNewShift" style="width:100%; margin-top:4px; font-weight:700;">
+          <option value="Day Shift">Day Shift (6 AM - 6 PM)</option>
+          <option value="Night Shift">Night Shift (6 PM - 6 AM)</option>
+          <option value="p/d">p/d (Permanent Day)</option>
+          <option value="p/n">p/n (Permanent Night)</option>
+        </select>
+      </label>
+      <div style="display:flex; align-items:flex-end;">
+        <button class="btn-success" onclick="applyShiftChange()" style="width:100%; padding:10px;">✅ Apply & Auto-Update Shifts</button>
+      </div>
+    </div>
+
+    <h4 style="margin:0 0 8px;">📜 Shift Change History Log</h4>
+    <div class="table-wrap" style="max-height:260px;">
+      <table>
+        <thead>
+          <tr><th>Effective Date</th><th>Employee / Group</th><th>New Shift Applied</th><th>Action</th></tr>
+        </thead>
+        <tbody id="shiftHistoryBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SMART ZKTECO MANUAL LOG GENERATOR MODAL -->
+<div id="smartManualLogModal" class="modal">
+  <div class="modal-content" style="width: 980px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="margin:0; color:#7c3aed;">📥 Smart ZKTeco Manual Log Generator (Multi-Employee & Auto-Fix)</h3>
+      <button onclick="closeModal('smartManualLogModal')" class="btn-danger" style="padding:4px 8px;">X</button>
+    </div>
+    <div class="controls" style="flex-wrap:wrap; gap:10px;">
+      <label>Select Employee(s):
+        <select id="smartLogEmpSelect" onchange="previewSmartManualLogs()" style="font-weight:700; min-width:200px;">
+          <option value="ALL">All Employees</option>
+        </select>
+      </label>
+      <label>Filter Report Type:
+        <select id="smartLogCategory" onchange="previewSmartManualLogs()" style="font-weight:700;">
+          <option value="LATE_AND_EARLY">1. Late Check-In (>06:30) & Early Out (<17:30)</option>
+          <option value="SINGLE_MISSING">2. Single Punch Missing Only</option>
+          <option value="NO_DUTY_ABSENT">3. No Duty / Both Missing</option>
+          <option value="ALL_COMBINED">4. All Combined Corrections</option>
+        </select>
+      </label>
+      <label>Shift Filter:
+        <select id="smartLogShiftFilter" onchange="previewSmartManualLogs()" style="font-weight:700;">
+          <option value="ALL">All Shifts</option>
+          <option value="DAY">Day Shift Only</option>
+          <option value="NIGHT">Night Shift Only</option>
+        </select>
+      </label>
+      <button class="btn-success" onclick="downloadSmartManualLogExcel()">📥 Download ZKTeco Import File (.xls)</button>
+    </div>
+    <div class="table-wrap" style="margin-top:10px; max-height:420px;">
+      <table>
+        <thead>
+          <tr><th><input type="checkbox" id="chkAllSmartLogs" checked onchange="toggleAllSmartCheckboxes(this.checked)" /></th><th>ID</th><th>Name</th><th>Shift</th><th>Date</th><th>Issue Detected</th><th>Actual Punch</th><th>Generated ZKTeco Log</th><th>Punch State</th></tr>
+        </thead>
+        <tbody id="smartManualLogPreviewBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- INDIVIDUAL EMPLOYEE SALARY SLIP MODAL -->
+<div id="salarySlipModal" class="modal">
+  <div class="modal-content" style="width: 750px;" id="salarySlipPrintArea">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;" class="no-print">
+      <h3 style="margin:0; color:#0d9488;">🖨️ Employee Salary Slip Generator</h3>
+      <div style="display:flex; gap:8px;">
+        <button class="btn-danger" style="background:#dc2626;" onclick="exportSalarySlipPDF()">📥 Download PDF</button>
+        <button onclick="closeModal('salarySlipModal')" class="btn-danger" style="padding:4px 8px;">X</button>
+      </div>
+    </div>
+    <div class="controls no-print" style="background:#f1f5f9; padding:10px; border-radius:6px;">
+      <label style="flex:1;">Select Employee:
+        <select id="slipEmpSelect" onchange="renderSalarySlipDetails()" style="width:100%; margin-top:4px; font-weight:700;"></select>
+      </label>
+    </div>
+    <div id="salarySlipCardBody" style="background:white; padding:20px; border:1px solid var(--border); border-radius:8px; margin-top:10px;"></div>
+  </div>
+</div>
+
+<!-- LEAVES SUMMARY MODAL -->
+<div id="leavesSummaryModal" class="modal">
+  <div class="modal-content" style="width: 1040px;" id="leavesSummaryPrintArea">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="margin:0; color:#d97706;">📊 Complete Leaves Summary (<span class="lblMonth"></span>)</h3>
+      <div style="display:flex; gap:8px;">
+        <button class="btn-danger" style="background:#dc2626;" onclick="exportLeavesSummaryPDF()">📥 Download PDF</button>
+        <button class="btn-success" onclick="exportLeavesSummaryExcel()">📥 Export Excel</button>
+        <button onclick="closeModal('leavesSummaryModal')" class="btn-danger" style="padding:4px 8px;">X</button>
+      </div>
+    </div>
+    <div class="controls">
+      <input type="text" id="leaveSumSearch" placeholder="Search Employee..." oninput="renderLeavesSummaryTable()" style="flex:1;" />
+    </div>
+    <div class="table-wrap" style="margin-top:10px;">
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Name</th><th>Position</th><th>Present</th><th>Weekly Offs</th><th>Holidays</th><th>Opening</th><th>Allowed</th><th>Quota</th><th>Taken / Abs</th><th>Balance</th><th>Unpaid Cut</th></tr>
+        </thead>
+        <tbody id="leavesSummaryBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- TODAY ABSENT MODAL -->
+<div id="todayAbsentModal" class="modal">
+  <div class="modal-content" style="width: 850px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="margin:0; color:#dc2626;">🚨 Absent Workers List for <span id="todayModalDate"></span></h3>
+      <button onclick="closeModal('todayAbsentModal')" class="btn-danger" style="padding:4px 8px;">X</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Position</th><th>Shift</th><th>Absent Since Date</th><th>Continuous Days</th></tr></thead>
+        <tbody id="todayAbsentModalBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SHIFT WORKERS LIST MODAL -->
+<div id="shiftWorkersModal" class="modal">
+  <div class="modal-content" style="width: 850px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="margin:0;" id="shiftModalTitle">Workers List</h3>
+      <button onclick="closeModal('shiftWorkersModal')" class="btn-danger" style="padding:4px 8px;">X</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Position</th><th>Shift</th><th>Salary</th><th>Status</th></tr></thead>
+        <tbody id="shiftWorkersModalBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ADVANCE MODALS -->
+<div id="singleAdvanceModal" class="modal">
+  <div class="modal-content" style="width: 480px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="margin:0;">💰 Add Employee Advance</h3>
+      <button onclick="closeModal('singleAdvanceModal')" class="btn-danger" style="padding:4px 8px;">X</button>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <label>Select Employee: <select id="advEmpSelect" style="width:100%; margin-top:4px;"></select></label>
+      <label>Advance Date: <input type="date" id="advDate" value="2026-11-24" style="width:100%; margin-top:4px;" /></label>
+      <label>Payroll Month: <input type="month" id="advMonth" value="2026-11" style="width:100%; margin-top:4px;" /></label>
+      <label>Advance Amount (PKR): <input type="number" id="advAmount" placeholder="e.g. 5000" style="width:100%; margin-top:4px;" /></label>
+      <button class="btn-success" onclick="saveSingleAdvance()" style="margin-top:8px;">Save Advance</button>
+    </div>
+  </div>
+</div>
+
+<div id="advanceLedgerModal" class="modal">
+  <div class="modal-content" style="width: 850px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="margin:0;">📋 Complete Advance Ledger & History</h3>
+      <button onclick="closeModal('advanceLedgerModal')" class="btn-danger" style="padding:4px 8px;">X</button>
+    </div>
+    <div class="controls">
+      <label>Filter Month: <input type="month" id="advLedgerMonthFilter" onchange="renderAdvanceLedger()" style="font-weight:700;" /></label>
+      <button class="btn-primary" onclick="document.getElementById('advLedgerMonthFilter').value=''; renderAdvanceLedger();">Show All Months</button>
+      <button class="btn-success" onclick="exportAdvanceLedgerExcel()">📥 Export Advance Ledger</button>
+    </div>
+    <div class="table-wrap" style="margin-top:10px;">
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Position</th><th>Advance Date</th><th>Payroll Month</th><th>Amount (PKR)</th><th>Action</th></tr></thead>
+        <tbody id="advanceLedgerBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- OTHER MODALS -->
+<div id="activeWorkersModal" class="modal">
+  <div class="modal-content">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="margin:0;">✅ Active / Present List (<span id="activeModalDate"></span>)</h3>
+      <button onclick="closeModal('activeWorkersModal')" class="btn-danger" style="padding:4px 8px;">X</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Position</th><th>Shift</th><th>Status</th></tr></thead>
+        <tbody id="activeWorkersModalBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="leaveLedgerModal" class="modal">
+  <div class="modal-content" style="width: 900px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="margin:0;">📋 Date-wise Employee Leave Ledger</h3>
+      <button onclick="closeModal('leaveLedgerModal')" class="btn-danger" style="padding:4px 8px;">X</button>
+    </div>
+    <div class="controls">
+      <select id="ledgerEmpSelect" onchange="renderLeaveLedger()" style="flex:1;"></select>
+      <button class="btn-success" onclick="exportLeaveLedgerExcel()">📥 Export Ledger</button>
+    </div>
+    <div class="table-wrap" style="margin-top:10px;">
+      <table>
+        <thead><tr><th>Date</th><th>Day</th><th>Status</th><th>Check-In</th><th>Check-Out</th></tr></thead>
+        <tbody id="ledgerTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="whatsappAlertModal" class="modal">
+  <div class="modal-content" style="width: 600px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="margin:0; color:#16a34a;">💬 WhatsApp Daily Attendance Report</h3>
+      <button onclick="closeModal('whatsappAlertModal')" class="btn-danger" style="padding:4px 8px;">X</button>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:12px;">
+      <label>Report Date: <input type="date" id="waReportDate" value="2026-11-24" onchange="generateWhatsAppText()" style="width:100%; margin-top:4px;" /></label>
+      <label>Message Preview:
+        <textarea id="waMessageText" style="width:100%; height:200px; margin-top:4px; padding:8px; font-family:monospace; font-size:12px;"></textarea>
+      </label>
+      <div style="display:flex; gap:10px;">
+        <button class="btn-success" onclick="sendViaWhatsAppWeb()" style="flex:1; background:#25d366;">🚀 Open WhatsApp & Send</button>
+        <button class="btn-primary" onclick="copyWhatsAppText()" style="flex:1;">📋 Copy Text</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="addEmployeeModal" class="modal">
+  <div class="modal-content" style="width: 500px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="margin:0;">➕ Add New Employee</h3>
+      <button onclick="closeModal('addEmployeeModal')" class="btn-danger" style="padding:4px 8px;">X</button>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <label>ID: <input type="text" id="newEmpId" style="width:100%;" /></label>
+      <label>Name: <input type="text" id="newEmpName" style="width:100%;" /></label>
+      <label>Position: <input type="text" id="newEmpPosition" value="Packer" style="width:100%;" /></label>
+      <label>Master Shift: <input type="text" id="newEmpShift" value="Day Shift" style="width:100%;" /></label>
+      <label>Category: <select id="newEmpCategory" style="width:100%;"><option value="Junior">Junior</option><option value="Senior">Senior</option></select></label>
+      <label>Salary: <input type="number" id="newEmpSalary" value="24000" style="width:100%;" /></label>
+      <label>Hired Date: <input type="date" id="newEmpHired" value="2026-11-01" style="width:100%;" /></label>
+      <label>Left Date: <input type="date" id="newEmpLeft" value="" style="width:100%;" /></label>
+      <label>Opening Pending: <input type="number" id="newEmpPending" value="0" style="width:100%;" /></label>
+      <button class="btn-success" onclick="addNewEmployeeRecord()" style="margin-top:10px;">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="holidayModal" class="modal">
+  <div class="modal-content" style="width: 500px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="margin:0;">📅 Holidays Manager</h3>
+      <button onclick="closeModal('holidayModal')" class="btn-danger" style="padding:4px 8px;">X</button>
+    </div>
+    <div style="display:flex; gap:10px; margin-bottom:14px;">
+      <input type="date" id="newHolidayDate" style="flex:1;" />
+      <button class="btn-success" onclick="addHoliday()">Add Holiday</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Date</th><th>Action</th></tr></thead>
+        <tbody id="holidayTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = 'https://zrpuksezmvzmscantcrf.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_66eUqI9zN4WhVRu4LPMMYg_7eATAs5L';
+  
+  let supabaseClient = null;
+  if (SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE' && SUPABASE_KEY !== 'YOUR_SUPABASE_ANON_KEY_HERE') {
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  }
+
+  let rawPunchesMem = [];
+  let logSortField = 'id';
+  let logSortAsc = true;
+  let smartManualLogCandidates = [];
+
+  // Migrate data seamlessly from v48 if available
+  let savedData = localStorage.getItem('factory_erp_pro_v49') || localStorage.getItem('factory_erp_pro_v48');
+  let db = savedData ? JSON.parse(savedData) : {
+    employees: {
+      "1": {id:"1", name:"Atif Javed", position:"Packer", shift:"Day Shift", hiredDate:"2026-09-04", leftDate:"", category:"Junior", salary:24000, openingPending:4, status:"Active"},
+      "2": {id:"2", name:"Ehtisham", position:"Packer", shift:"Day Shift", hiredDate:"2025-05-15", leftDate:"", category:"Junior", salary:24000, openingPending:0, status:"Active"},
+      "4": {id:"4", name:"Hafiz Ubaid Ullah", position:"Packer", shift:"Day Shift", hiredDate:"2026-07-19", leftDate:"", category:"Junior", salary:24000, openingPending:6, status:"Active"},
+      "5": {id:"5", name:"Shahroz", position:"Packer", shift:"Day Shift", hiredDate:"2026-09-01", leftDate:"", category:"Junior", salary:24000, openingPending:0, status:"Active"},
+      "6": {id:"6", name:"Younis", position:"Machine Operator", shift:"Day Shift", hiredDate:"2023-10-12", leftDate:"", category:"Junior", salary:27830, openingPending:0, status:"Active"},
+      "7": {id:"7", name:"M Ahsan", position:"Packer", shift:"Day Shift", hiredDate:"2026-04-26", leftDate:"", category:"Junior", salary:24000, openingPending:0, status:"Active"},
+      "8": {id:"8", name:"Ali Murtaaz", position:"Packer", shift:"Day Shift", hiredDate:"2026-05-01", leftDate:"", category:"Junior", salary:24000, openingPending:0, status:"Active"},
+      "9": {id:"9", name:"M Faisal", position:"Packer", shift:"Day Shift", hiredDate:"2026-08-15", leftDate:"", category:"Junior", salary:24000, openingPending:0, status:"Active"},
+      "10": {id:"10", name:"Sabir ali", position:"Machine Operator", shift:"Day Shift", hiredDate:"2025-10-12", leftDate:"", category:"Junior", salary:24000, openingPending:0, status:"Active"},
+      "11": {id:"11", name:"Haider Ali", position:"Packer", shift:"Day Shift", hiredDate:"2026-08-10", leftDate:"", category:"Junior", salary:24000, openingPending:2, status:"Active"},
+      "12": {id:"12", name:"Rizwan Ali PK", position:"Packer", shift:"Day Shift", hiredDate:"2026-07-08", leftDate:"", category:"Junior", salary:24000, openingPending:0, status:"Active"},
+      "13": {id:"13", name:"Sajjad Wazir", position:"Packer", shift:"Day Shift", hiredDate:"2026-08-04", leftDate:"", category:"Junior", salary:24000, openingPending:2, status:"Active"},
+      "14": {id:"14", name:"M Faizan Bodh", position:"Loader", shift:"p/d", hiredDate:"2025-05-12", leftDate:"", category:"Junior", salary:24000, openingPending:4, status:"Active"},
+      "15": {id:"15", name:"M Tahseen", position:"Loader", shift:"p/d", hiredDate:"2026-07-11", leftDate:"", category:"Junior", salary:24000, openingPending:0, status:"Active"},
+      "16": {id:"16", name:"M Javaid", position:"Loader", shift:"p/d", hiredDate:"2026-09-05", leftDate:"", category:"Junior", salary:24000, openingPending:4, status:"Active"},
+      "18": {id:"18", name:"M Umar", position:"Loader", shift:"p/d", hiredDate:"2026-07-08", leftDate:"", category:"Junior", salary:24000, openingPending:0, status:"Active"},
+      "19": {id:"19", name:"M Shaoib Akhtar", position:"Packer", shift:"Day Shift", hiredDate:"2026-09-07", leftDate:"", category:"Junior", salary:24000, openingPending:4, status:"Active"},
+      "20": {id:"20", name:"Zubair Haider", position:"Electrician", shift:"p/d", hiredDate:"2023-07-17", leftDate:"", category:"Senior", salary:30000, openingPending:2, status:"Active"},
+      "21": {id:"21", name:"Asadullah", position:"Packer", shift:"p/d", hiredDate:"2026-01-06", leftDate:"", category:"Junior", salary:24000, openingPending:0, status:"Active"},
+      "22": {id:"22", name:"Yaqoob Jatoi", position:"Packer", shift:"p/d", hiredDate:"2021-01-01", leftDate:"", category:"Junior", salary:27830, openingPending:4, status:"Active"},
+      "23": {id:"23", name:"Abubakar Jatoi", position:"Machine Operator", shift:"Day Shift", hiredDate:"2023-06-23", leftDate:"", category:"Junior", salary:27830, openingPending:2, status:"Active"},
+      "25": {id:"25", name:"Kfiatullah", position:"Packer", shift:"Day Shift", hiredDate:"2026-09-23", leftDate:"", category:"Junior", salary:24000, openingPending:2, status:"Active"},
+      "26": {id:"26", name:"Abdulbasit", position:"Machine Operator", shift:"Day Shift", hiredDate:"2022-03-01", leftDate:"", category:"Senior", salary:28050, openingPending:3, status:"Active"},
+      "27": {id:"27", name:"Abdul Qadeer Jatoi", position:"Shift In charge", shift:"Day Shift", hiredDate:"2017-01-01", leftDate:"", category:"Senior", salary:31246, openingPending:3, status:"Active"},
+      "28": {id:"28", name:"Sajjad Khan Jatoi", position:"Machine Operator", shift:"p/d", hiredDate:"2018-01-01", leftDate:"", category:"Senior", salary:30613, openingPending:2, status:"Active"},
+      "29": {id:"29", name:"Faizan Ali PK", position:"Packer", shift:"p/d", hiredDate:"2025-08-23", leftDate:"", category:"Junior", salary:24000, openingPending:2, status:"Active"},
+      "30": {id:"30", name:"M Sohaib Pk", position:"Packer", shift:"p/d", hiredDate:"2026-05-23", leftDate:"", category:"Junior", salary:24000, openingPending:0, status:"Active"},
+      "31": {id:"31", name:"M Adeel", position:"Packer", shift:"Day Shift", hiredDate:"2026-07-09", leftDate:"", category:"Junior", salary:24000, openingPending:0, status:"Active"},
+      "32": {id:"32", name:"M Naeem", position:"Packer", shift:"Night Shift", hiredDate:"2024-11-14", leftDate:"", category:"Junior", salary:26400, openingPending:0, status:"Active"},
+      "33": {id:"33", name:"M Riaz Wazir", position:"Packer", shift:"Night Shift", hiredDate:"2026-08-03", leftDate:"", category:"Junior", salary:24000, openingPending:6, status:"Active"},
+      "35": {id:"35", name:"M Irshad", position:"Packer", shift:"Night Shift", hiredDate:"2026-01-02", leftDate:"", category:"Junior", salary:24000, openingPending:0, status:"Active"},
+      "36": {id:"36", name:"Saqlain Abbas", position:"Supervisor", shift:"p/d", hiredDate:"2025-09-23", leftDate:"", category:"Junior", salary:24000, openingPending:2, status:"Active"},
+      "37": {id:"37", name:"M Ahmad Pk", position:"Loader", shift:"p/n", hiredDate:"2024-07-23", leftDate:"", category:"Junior", salary:26400, openingPending:0, status:"Active"},
+      "38": {id:"38", name:"Waleed Lodhi", position:"Machine Operator", shift:"Night Shift", hiredDate:"2022-09-23", leftDate:"", category:"Junior", salary:27830, openingPending:8, status:"Active"},
+      "39": {id:"39", name:"Uzain Akhtar Lodhi", position:"Machine Operator", shift:"Night Shift", hiredDate:"2025-09-23", leftDate:"", category:"Junior", salary:24000, openingPending:2, status:"Active"},
+      "41": {id:"41", name:"Asad Mureed", position:"Packer", shift:"Night Shift", hiredDate:"2023-01-01", leftDate:"", category:"Junior", salary:27830, openingPending:0, status:"Active"},
+      "42": {id:"42", name:"Asad Ali Bodh", position:"Machine Operator", shift:"Night Shift", hiredDate:"2024-05-01", leftDate:"", category:"Junior", salary:26400, openingPending:8, status:"Active"},
+      "43": {id:"43", name:"Ghulam Muhammad", position:"Packer", shift:"Night Shift", hiredDate:"2026-06-23", leftDate:"", category:"Junior", salary:24000, openingPending:0, status:"Active"},
+      "44": {id:"44", name:"M Umair PK", position:"Loader", shift:"p/n", hiredDate:"2026-07-10", leftDate:"", category:"Junior", salary:24000, openingPending:0, status:"Active"},
+      "45": {id:"45", name:"Abubakar Niaz", position:"Loader", shift:"p/d", hiredDate:"2026-05-01", leftDate:"", category:"Junior", salary:24000, openingPending:0, status:"Active"},
+      "46": {id:"46", name:"Hadayat Ullah", position:"Packer", shift:"Night Shift", hiredDate:"2026-07-04", leftDate:"", category:"Junior", salary:24000, openingPending:0, status:"Active"},
+      "47": {id:"47", name:"M Waseem Aziz", position:"Packer", shift:"Night Shift", hiredDate:"2026-09-06", leftDate:"", category:"Junior", salary:24000, openingPending:3, status:"Active"},
+      "48": {id:"48", name:"Zabeeh Ullah", position:"Packer", shift:"Night Shift", hiredDate:"2026-09-05", leftDate:"", category:"Junior", salary:24000, openingPending:4, status:"Active"},
+      "49": {id:"49", name:"Munawar Shah", position:"Machine Operator", shift:"p/n", hiredDate:"2021-01-01", leftDate:"", category:"Senior", salary:30613, openingPending:0, status:"Active"},
+      "51": {id:"51", name:"M Khalid Abid", position:"Machine Operator", shift:"Night Shift", hiredDate:"2014-09-23", leftDate:"", category:"Senior", salary:34788, openingPending:4, status:"Active"},
+      "52": {id:"52", name:"M Ubaid Akhtar", position:"Packer", shift:"p/d", hiredDate:"2026-07-04", leftDate:"", category:"Junior", salary:24000, openingPending:0, status:"Active"},
+      "53": {id:"53", name:"M Rizwan Ali", position:"Machine Operator", shift:"Night Shift", hiredDate:"2021-01-01", leftDate:"", category:"Junior", salary:27830, openingPending:0, status:"Active"},
+      "54": {id:"54", name:"Mulazim Hussain", position:"Shift In charge", shift:"Night Shift", hiredDate:"1993-02-23", leftDate:"", category:"Senior", salary:52708, openingPending:0, status:"Active"},
+      "56": {id:"56", name:"M Asif Yaseen", position:"Supervisor", shift:"p/n", hiredDate:"2017-03-07", leftDate:"", category:"Senior", salary:32777, openingPending:2, status:"Active"},
+      "57": {id:"57", name:"Munawar Abbas", position:"Loader", shift:"p/d", hiredDate:"2022-07-24", leftDate:"", category:"Senior", salary:27830, openingPending:0, status:"Active"},
+      "59": {id:"59", name:"Irfan Basheer", position:"Packer", shift:"p/d", hiredDate:"2026-09-30", leftDate:"", category:"Junior", salary:24000, openingPending:2, status:"Active"},
+      "60": {id:"60", name:"M Ashraf", position:"Packer", shift:"Night Shift", hiredDate:"2026-09-30", leftDate:"", category:"Junior", salary:24000, openingPending:2, status:"Active"},
+      "61": {id:"61", name:"M Ameen", position:"Packer", shift:"Day Shift", hiredDate:"2026-09-30", leftDate:"", category:"Junior", salary:24000, openingPending:2, status:"Active"},
+      "62": {id:"62", name:"M Ramzan Niaz", position:"Packer", shift:"Night Shift", hiredDate:"2026-10-27", leftDate:"", category:"Junior", salary:24000, openingPending:0, status:"Active"},
+      "63": {id:"63", name:"Armtia masih", position:"Sweepers", shift:"p/d", hiredDate:"2026-11-02", leftDate:"", category:"Junior", salary:28000, openingPending:0, status:"Active"},
+      "64": {id:"64", name:"Attiq Ul Rehman", position:"Packer", shift:"Day Shift", hiredDate:"2026-11-10", leftDate:"", category:"Junior", salary:26400, openingPending:0, status:"Active"},
+      "65": {id:"65", name:"Malik Muzamil", position:"Operational Manager", shift:"p/d", hiredDate:"2024-03-22", leftDate:"", category:"Senior", salary:48400, openingPending:10, status:"Active"},
+      "66": {id:"66", name:"Malik Saftain", position:"Inventory In charge", shift:"p/d", hiredDate:"2023-08-13", leftDate:"", category:"Senior", salary:33000, openingPending:4, status:"Active"},
+      "67": {id:"67", name:"Jamshaid Iqbal", position:"Office Boy", shift:"p/d", hiredDate:"2016-01-01", leftDate:"", category:"Senior", salary:32777, openingPending:2, status:"Active"},
+      "68": {id:"68", name:"Basheer Ahmad", position:"Shift In charge", shift:"p/d", hiredDate:"2023-01-01", leftDate:"", category:"Senior", salary:33000, openingPending:0, status:"Active"},
+      "69": {id:"69", name:"Shoaib Kareem", position:"Worker", shift:"p/d", hiredDate:"2026-06-01", leftDate:"", category:"Junior", salary:25000, openingPending:4, status:"Active"},
+      "70": {id:"70", name:"M Shahid PK", position:"Electrician", shift:"p/d", hiredDate:"2016-01-01", leftDate:"", category:"Senior", salary:45000, openingPending:0, status:"Active"},
+      "71": {id:"71", name:"M Sajjad M/G", position:"Purchases In charge", shift:"p/d", hiredDate:"2016-01-01", leftDate:"", category:"Senior", salary:40700, openingPending:2, status:"Active"},
+      "72": {id:"72", name:"M Kaleem Ullah", position:"General Manager", shift:"p/d", hiredDate:"2001-01-01", leftDate:"", category:"Senior", salary:73205, openingPending:0, status:"Active"},
+      "73": {id:"73", name:"Baba Jahanzaib", position:"Security Guard", shift:"p/d", hiredDate:"2019-01-01", leftDate:"", category:"Senior", salary:32144, openingPending:0, status:"Active"}
+    },
+    processedShifts: [],
+    rawPunches: [],
+    shiftHistory: [],
+    manualStatus: {},
+    advancesList: [],
+    holidays: [], 
+    sundayOT: {}  
+  };
+
+  if (!db.shiftHistory) db.shiftHistory = [];
+  if (db.rawPunches && db.rawPunches.length > 0) rawPunchesMem = db.rawPunches;
+
+  async function saveDB() {
+    try {
+      db.rawPunches = rawPunchesMem;
+      localStorage.setItem('factory_erp_pro_v49', JSON.stringify(db));
+      if (supabaseClient) {
+        await supabaseClient.from('factory_state').upsert({ id: 'main_db', data: db, updated_at: new Date() });
+      }
+    } catch (e) {}
+  }
+
+  async function loadCloudDB() {
+    if (!supabaseClient) return;
+    try {
+      const { data } = await supabaseClient.from('factory_state').select('data').eq('id', 'main_db').single();
+      if (data && data.data) {
+        db = data.data;
+        if (db.rawPunches) rawPunchesMem = db.rawPunches;
+        refreshDashboard();
+      }
+    } catch (e) {}
+  }
+
+  function syncDateWithMonth() {
+    const m = document.getElementById('globalMonth').value;
+    const fDate = document.getElementById('filterDate').value;
+    if (m && (!fDate || !fDate.startsWith(m))) {
+      document.getElementById('filterDate').value = `${m}-15`;
+    }
+  }
+
+  function switchTab(tabId, btn) {
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tabs button').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    btn.classList.add('active');
+    refreshDashboard();
+  }
+
+  // --- DYNAMIC SHIFT RESOLUTION FOR ANY DATE ---
+  function getEffectiveShiftForDate(empId, dateStr) {
+    const emp = db.employees[empId] || { shift: 'Day Shift' };
+    let activeShift = emp.shift || 'Day Shift';
+
+    if (db.shiftHistory && db.shiftHistory.length > 0) {
+      // Find all applicable shift changes for this employee or ALL employees sorted chronologically
+      const applicable = db.shiftHistory
+        .filter(h => (h.targetId === 'ALL' || String(h.targetId) === String(empId)) && h.effectiveDate <= dateStr)
+        .sort((a, b) => a.effectiveDate.localeCompare(b.effectiveDate));
+      
+      if (applicable.length > 0) {
+        activeShift = applicable[applicable.length - 1].newShift;
+      }
+    }
+    return activeShift;
+  }
+
+  function openShiftChangeModal() {
+    const sel = document.getElementById('scTargetSelect');
+    const list = getActiveEmployees();
+    sel.innerHTML = `
+      <option value="ALL">🌐 All Rotational Shift Workers (Day <-> Night Swap)</option>
+      <option value="GROUP_DAY_TO_NIGHT">☀️ All Current Day Shift -> Night Shift</option>
+      <option value="GROUP_NIGHT_TO_DAY">🌙 All Current Night Shift -> Day Shift</option>
+    ` + list.map(e => `<option value="${e.id}">${e.id} - ${e.name} (Current: ${e.shift})</option>`).join('');
+    
+    document.getElementById('scEffectiveDate').value = document.getElementById('filterDate').value || new Date().toISOString().slice(0, 10);
+    renderShiftHistory();
+    document.getElementById('shiftChangeModal').style.display = 'flex';
+  }
+
+  function applyShiftChange() {
+    const target = document.getElementById('scTargetSelect').value;
+    const effDate = document.getElementById('scEffectiveDate').value;
+    const newShift = document.getElementById('scNewShift').value;
+    if (!effDate) return alert('Effective Date select karein!');
+
+    if (!db.shiftHistory) db.shiftHistory = [];
+
+    if (target === 'ALL') {
+      // Swap rotational Day Shift <-> Night Shift workers (keep p/d and p/n untouched)
+      getActiveEmployees().forEach(emp => {
+        if (emp.shift === 'Day Shift') {
+          emp.shift = 'Night Shift';
+          db.shiftHistory.push({ uid: Date.now() + Math.random(), targetId: emp.id, targetName: `${emp.id} - ${emp.name}`, effectiveDate: effDate, newShift: 'Night Shift' });
+        } else if (emp.shift === 'Night Shift') {
+          emp.shift = 'Day Shift';
+          db.shiftHistory.push({ uid: Date.now() + Math.random(), targetId: emp.id, targetName: `${emp.id} - ${emp.name}`, effectiveDate: effDate, newShift: 'Day Shift' });
+        }
+      });
+    } else if (target === 'GROUP_DAY_TO_NIGHT') {
+      getActiveEmployees().filter(e => e.shift === 'Day Shift').forEach(emp => {
+        emp.shift = 'Night Shift';
+        db.shiftHistory.push({ uid: Date.now() + Math.random(), targetId: emp.id, targetName: `${emp.id} - ${emp.name}`, effectiveDate: effDate, newShift: 'Night Shift' });
+      });
+    } else if (target === 'GROUP_NIGHT_TO_DAY') {
+      getActiveEmployees().filter(e => e.shift === 'Night Shift').forEach(emp => {
+        emp.shift = 'Day Shift';
+        db.shiftHistory.push({ uid: Date.now() + Math.random(), targetId: emp.id, targetName: `${emp.id} - ${emp.name}`, effectiveDate: effDate, newShift: 'Day Shift' });
+      });
+    } else {
+      const emp = db.employees[target];
+      if (emp) {
+        emp.shift = newShift;
+        db.shiftHistory.push({ uid: Date.now() + Math.random(), targetId: emp.id, targetName: `${emp.id} - ${emp.name}`, effectiveDate: effDate, newShift });
+      }
+    }
+
+    // Re-evaluate attendance punches with new shift schedule!
+    if (rawPunchesMem.length > 0) {
+      reconstructShiftsExcludingOffDays();
+    }
+
+    saveDB();
+    renderShiftHistory();
+    refreshDashboard();
+    alert(`Shift successfully updated effective from ${effDate}! System ne punches ko bhi auto-adjust kar diya hai.`);
+  }
+
+  function renderShiftHistory() {
+    const tb = document.getElementById('shiftHistoryBody');
+    if (!tb) return;
+    const hist = (db.shiftHistory || []).slice().reverse();
+    tb.innerHTML = hist.map(h => `
+      <tr>
+        <td><strong>${h.effectiveDate}</strong></td>
+        <td>${h.targetName}</td>
+        <td><span class="badge ${h.newShift.toLowerCase().includes('night') || h.newShift==='p/n' ? 'b-night' : 'b-day'}">${h.newShift}</span></td>
+        <td><button class="btn-danger" style="padding:3px 6px;" onclick="deleteShiftHistory(${h.uid})">Remove</button></td>
+      </tr>
+    `).join('');
+  }
+
+  function deleteShiftHistory(uid) {
+    db.shiftHistory = db.shiftHistory.filter(h => h.uid !== uid);
+    if (rawPunchesMem.length > 0) reconstructShiftsExcludingOffDays();
+    saveDB();
+    renderShiftHistory();
+    refreshDashboard();
+  }
+
+  function importEmployeesExcel() {
+    const file = document.getElementById('empFileInput').files[0];
+    if (!file) return alert('Employee Excel file select karein!');
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type: 'array' });
+        const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+        if (json.length === 0) return alert('Excel file empty hai!');
+
+        json.forEach(r => {
+          const id = String(r['Employee ID'] || r['Employee'] || r['ID'] || r['id'] || '').trim();
+          if (!id || id.toLowerCase() === 'employee id') return;
+          const shiftVal = String(r['shift'] || r['Shift'] || r['Master Shift'] || 'Day Shift').trim();
+          let hiredDate = String(r['Hired Date'] || r['Hired_Date'] || '2025-01-01').trim().slice(0, 10);
+          let leftDate = String(r['Left Date'] || r['Left_Date'] || '').trim().slice(0, 10);
+          
+          const existing = db.employees[id] || {};
+          db.employees[id] = {
+            id,
+            name: String(r['First Name'] || r['Name'] || r['name'] || existing.name || 'Staff').trim(),
+            position: String(r['Position'] || r['position'] || existing.position || 'Worker').trim(),
+            hiredDate: hiredDate || existing.hiredDate || '2025-01-01',
+            leftDate: leftDate || existing.leftDate || '',
+            shift: shiftVal,
+            category: String(r['Category'] || existing.category || 'Junior').toLowerCase().includes('sen') ? 'Senior' : 'Junior',
+            salary: Number(r['Salry'] || r['Basic Salary'] || r['Salary'] || existing.salary || 24000),
+            openingPending: Number(r['Pnding Leve'] || r['Pending Leaves'] || existing.openingPending || 0),
+            status: existing.status || 'Active'
+          };
+        });
+        saveDB(); refreshDashboard();
+        alert(`Successfully imported ${Object.keys(db.employees).length} employees!`);
+      } catch (err) { alert('Error: ' + err.message); }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function importAdvanceExcel() {
+    const file = document.getElementById('advFileInput').files[0];
+    if (!file) return alert('Advance Excel file select karein!');
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type: 'array' });
+        const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: "" });
+        if (json.length === 0) return alert('Advance Excel file empty hai!');
+
+        if (!db.advancesList) db.advancesList = [];
+        let count = 0;
+
+        json.forEach(r => {
+          const keys = Object.keys(r);
+          const idKey = keys.find(k => ['employee id', 'id', 'emp id'].includes(k.trim().toLowerCase()));
+          const amtKey = keys.find(k => k.trim().toLowerCase().includes('amount') || k.trim().toLowerCase().includes('advance'));
+          const moKey = keys.find(k => k.trim().toLowerCase().includes('month'));
+          const dtKey = keys.find(k => k.trim().toLowerCase().includes('date'));
+
+          const id = String(idKey ? r[idKey] : '').trim();
+          const amount = Number(amtKey ? r[amtKey] : 0);
+
+          let mo = document.getElementById('globalMonth').value;
+          if (moKey && r[moKey] !== "") {
+            if (typeof r[moKey] === 'number') {
+              const d = XLSX.SSF.parse_date_code(r[moKey]);
+              mo = `${d.y}-${String(d.m).padStart(2, '0')}`;
+            } else {
+              mo = String(r[moKey]).trim().slice(0, 7);
+            }
+          }
+
+          let dt = new Date().toISOString().slice(0, 10);
+          if (dtKey && r[dtKey] !== "") {
+            if (typeof r[dtKey] === 'number') {
+              const d = XLSX.SSF.parse_date_code(r[dtKey]);
+              dt = `${d.y}-${String(d.m).padStart(2, '0')}-${String(d.d).padStart(2, '0')}`;
+            } else {
+              dt = String(r[dtKey]).trim().slice(0, 10);
+            }
+          }
+
+          if (id && amount > 0) {
+            db.advancesList.push({ uid: Date.now() + Math.random(), id, date: dt, month: mo, amount });
+            count++;
+          }
+        });
+
+        saveDB();
+        refreshDashboard();
+        if (typeof renderAdvanceLedger === 'function') renderAdvanceLedger();
+        alert(`Successfully imported & saved ${count} advance records!`);
+      } catch (err) { alert('Error: ' + err.message); }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function processAttendanceUpload() {
+    const file = document.getElementById('attFileInput').files[0];
+    if (!file) return alert('ZKTeco Attendance file select karein!');
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type: 'array' });
+        const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, defval: "" });
+        
+        let headerIdx = rows.findIndex(r => r && r.some(c => String(c).toLowerCase().includes('employee id') || String(c).toLowerCase().includes('id')));
+        if (headerIdx === -1) headerIdx = 0;
+
+        const punchMap = new Map();
+        // Keep existing punches so multi-month / multi-year data persists long-term
+        rawPunchesMem.forEach(p => punchMap.set(`${p.id}_${p.ts}`, p));
+        let count = 0;
+
+        for (let i = headerIdx + 1; i < rows.length; i++) {
+          const r = rows[i];
+          if (!r || r.length < 4) continue;
+          
+          const empId = String(r[0] || '').trim();
+          let name = String(r[1] || '').trim();
+          let pos = String(r[2] || '').trim();
+          let dateVal = r[3];
+          const timesStr = String(r[5] || r[4] || '').trim();
+
+          if (!empId || !timesStr || empId.toLowerCase() === 'employee id' || empId === 'ID') continue;
+
+          if (!name || name === 'Staff') {
+            if (db.employees[empId]) {
+              name = db.employees[empId].name;
+              pos = db.employees[empId].position;
+            } else name = 'Employee ' + empId;
+          }
+
+          let dateStr = '';
+          if (typeof dateVal === 'number') {
+            const d = XLSX.SSF.parse_date_code(dateVal);
+            dateStr = `${d.y}-${String(d.m).padStart(2,'0')}-${String(d.d).padStart(2,'0')}`;
+          } else dateStr = String(dateVal || '').trim().slice(0, 10);
+
+          if (!dateStr || dateStr.length < 10) continue;
+
+          if (!db.employees[empId]) {
+            db.employees[empId] = { id: empId, name, position: pos || 'Worker', hiredDate: '2025-01-01', leftDate: '', shift: 'Day Shift', category: 'Junior', salary: 24000, openingPending: 0, status: 'Active' };
+          }
+
+          const times = timesStr.split(',').map(t => t.trim()).filter(Boolean);
+          times.forEach(t => {
+            const cleanTime = t.length === 5 ? t + ':00' : t;
+            const ts = new Date(`${dateStr}T${cleanTime}`).getTime();
+            if (!isNaN(ts)) {
+              punchMap.set(`${empId}_${ts}`, { id: empId, name, ts, dateStr, timeStr: cleanTime });
+              count++;
+            }
+          });
+        }
+
+        rawPunchesMem = Array.from(punchMap.values()).sort((a, b) => a.ts - b.ts);
+        reconstructShiftsExcludingOffDays();
+        saveDB(); refreshDashboard();
+        alert(`Successfully imported ${count} punches! (All months & years supported)`);
+      } catch (err) { alert('Error: ' + err.message); }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  // --- AUTO-HANDLE SHIFT DETECTION INCLUDING MID-MONTH SHIFT CHANGES ---
+  function reconstructShiftsExcludingOffDays() {
+    const byEmp = {};
+    rawPunchesMem.forEach(p => {
+      if (!byEmp[p.id]) byEmp[p.id] = [];
+      byEmp[p.id].push(p);
+    });
+
+    const results = [];
+    Object.keys(byEmp).forEach(empId => {
+      const emp = db.employees[empId] || { shift: 'Day Shift', position: 'Worker', name: 'Employee ' + empId };
+      const punches = byEmp[empId].sort((a, b) => a.ts - b.ts);
+
+      let i = 0;
+      while (i < punches.length) {
+        const curr = punches[i];
+        const next = punches[i + 1];
+        const effectiveShift = getEffectiveShiftForDate(empId, curr.dateStr).toLowerCase();
+        const isNightOnDate = effectiveShift.includes('p/n') || effectiveShift.includes('night');
+
+        // Case 1: Night Shift (Evening Check-In >= 15:00 to Next Morning Check-Out <= 12:00)
+        if (isNightOnDate) {
+          if (next && curr.timeStr >= '15:00:00' && next.timeStr <= '12:00:00') {
+            const diffHrs = (next.ts - curr.ts) / 3600000;
+            if (diffHrs >= 4 && diffHrs <= 18) {
+              results.push({
+                id: emp.id, name: emp.name, position: emp.position,
+                dutyDate: curr.dateStr, month: curr.dateStr.slice(0, 7),
+                shiftType: 'NIGHT',
+                rawInTime: curr.timeStr.slice(0,5),
+                rawOutTime: next.timeStr.slice(0,5),
+                checkIn: `${curr.dateStr.slice(5)} ${curr.timeStr.slice(0,5)}`,
+                checkOut: `${next.dateStr.slice(5)} ${next.timeStr.slice(0,5)}`,
+                totalHrs: Math.round(diffHrs * 100) / 100, status: 'OK', hasIn: true, hasOut: true
+              });
+              i += 2;
+              continue;
+            }
+          }
+
+          if (curr.timeStr >= '15:00:00') {
+            results.push({
+              id: emp.id, name: emp.name, position: emp.position,
+              dutyDate: curr.dateStr, month: curr.dateStr.slice(0, 7),
+              shiftType: 'NIGHT',
+              rawInTime: curr.timeStr.slice(0,5),
+              rawOutTime: '',
+              checkIn: `${curr.dateStr.slice(5)} ${curr.timeStr.slice(0,5)}`,
+              checkOut: 'MISSING', totalHrs: 0, status: 'Out Missing', hasIn: true, hasOut: false
+            });
+            i += 1;
+            continue;
+          }
+
+          if (curr.timeStr <= '12:00:00') {
+            results.push({
+              id: emp.id, name: emp.name, position: emp.position,
+              dutyDate: curr.dateStr, month: curr.dateStr.slice(0, 7),
+              shiftType: 'NIGHT',
+              rawInTime: '',
+              rawOutTime: curr.timeStr.slice(0,5),
+              checkIn: 'MISSING',
+              checkOut: `${curr.dateStr.slice(5)} ${curr.timeStr.slice(0,5)}`,
+              totalHrs: 0, status: 'In Missing', hasIn: false, hasOut: true
+            });
+            i += 1;
+            continue;
+          }
+          i += 1;
+        } else {
+          // Case 2: Day Shift (Same-Day Check-In and Check-Out, or 18-hr transition)
+          const sameDayPunches = [];
+          let j = i;
+          while (j < punches.length && punches[j].dateStr === curr.dateStr) {
+            sameDayPunches.push(punches[j]);
+            j++;
+          }
+
+          if (sameDayPunches.length >= 2) {
+            const first = sameDayPunches[0];
+            const last = sameDayPunches[sameDayPunches.length - 1];
+            const diffHrs = (last.ts - first.ts) / 3600000;
+            if (diffHrs >= 2 && diffHrs <= 18) {
+              results.push({
+                id: emp.id, name: emp.name, position: emp.position,
+                dutyDate: curr.dateStr, month: curr.dateStr.slice(0, 7),
+                shiftType: 'DAY',
+                rawInTime: first.timeStr.slice(0,5),
+                rawOutTime: last.timeStr.slice(0,5),
+                checkIn: `${curr.dateStr.slice(5)} ${first.timeStr.slice(0,5)}`,
+                checkOut: `${curr.dateStr.slice(5)} ${last.timeStr.slice(0,5)}`,
+                totalHrs: Math.round(diffHrs * 100) / 100, status: 'OK', hasIn: true, hasOut: true
+              });
+              i = j;
+              continue;
+            }
+          }
+
+          // Single punch on Day shift
+          const p = sameDayPunches[0];
+          const isOut = p.timeStr >= '14:00:00';
+          results.push({
+            id: emp.id, name: emp.name, position: emp.position,
+            dutyDate: curr.dateStr, month: curr.dateStr.slice(0, 7),
+            shiftType: 'DAY',
+            rawInTime: isOut ? '' : p.timeStr.slice(0,5),
+            rawOutTime: isOut ? p.timeStr.slice(0,5) : '',
+            checkIn: isOut ? 'MISSING' : `${curr.dateStr.slice(5)} ${p.timeStr.slice(0,5)}`,
+            checkOut: isOut ? `${curr.dateStr.slice(5)} ${p.timeStr.slice(0,5)}` : 'MISSING',
+            totalHrs: 0, status: isOut ? 'In Missing' : 'Out Missing', hasIn: !isOut, hasOut: isOut
+          });
+          i = j;
+        }
+      }
+    });
+
+    db.processedShifts = results.sort((a, b) => String(a.dutyDate || '').localeCompare(String(b.dutyDate || '')) || Number(a.id) - Number(b.id));
+  }
+
+  function getActiveEmployees() {
+    return Object.values(db.employees).filter(e => (e.status || 'Active') === 'Active');
+  }
+
+  function getPresentIDsForDate(filterDate) {
+    const m = String(filterDate || '').slice(0, 7);
+    const monthShifts = db.processedShifts.filter(s => s.month === m);
+    const presentIDs = new Set();
+
+    monthShifts.forEach(s => {
+      const emp = db.employees[s.id];
+      if (!emp || (emp.status || 'Active') !== 'Active') return;
+      if (s.dutyDate === filterDate && (s.hasIn || s.hasOut || db.manualStatus[`${s.id}_${s.dutyDate}`] === 'Present')) {
+        presentIDs.add(s.id);
+      }
+    });
+    return presentIDs;
+  }
+
+  function refreshDashboard() {
+    const m = document.getElementById('globalMonth').value;
+    const filterDate = document.getElementById('filterDate').value;
+    document.querySelectorAll('.lblMonth').forEach(el => el.textContent = m);
+
+    const activeEmps = getActiveEmployees();
+    let dayCount = 0, nightCount = 0;
+    activeEmps.forEach(e => {
+      const s = getEffectiveShiftForDate(e.id, filterDate).toLowerCase();
+      if (s.includes('p/n') || s.includes('night')) nightCount++;
+      else dayCount++;
+    });
+    document.getElementById('statDayShiftCount').textContent = dayCount;
+    document.getElementById('statNightShiftCount').textContent = nightCount;
+
+    const presentIDs = getPresentIDsForDate(filterDate);
+    document.getElementById('statActiveToday').textContent = presentIDs.size;
+
+    const absentList = activeEmps.filter(e => {
+      if (e.hiredDate && e.hiredDate > filterDate) return false;
+      const isSunday = new Date(filterDate + 'T00:00:00').getDay() === 0;
+      if (isSunday || (db.holidays || []).includes(filterDate)) return false;
+      return !presentIDs.has(e.id);
+    });
+    document.getElementById('statTodayAbsent').textContent = absentList.length;
+
+    let totalMonthLeavesCount = 0;
+    activeEmps.forEach(emp => {
+      const stats = getEmpStats(emp.id, m);
+      if (stats.leavesUsed > 0 || stats.totalAbsents > 0) totalMonthLeavesCount++;
+    });
+    document.getElementById('statMonthLeave').textContent = totalMonthLeavesCount;
+
+    // --- FINANCIAL SUMMARY CALCULATIONS (STRICT 30-DAY STANDARD) ---
+    let totalGross = 0, totalAdv = 0, totalDeductions = 0, netPayableSum = 0;
+    activeEmps.forEach(emp => {
+      const stats = getEmpStats(emp.id, m);
+      const perDay = emp.salary / 30; // ALWAYS 30 DAYS
+      const adv = getTotalAdvanceForMonth(emp.id, m);
+      const cut = stats.totalAbsents * perDay;
+      let net = 0;
+      if (stats.presentDays > 0) {
+        net = Math.max(0, Math.round(emp.salary - cut - adv));
+      }
+
+      totalGross += Number(emp.salary) || 0;
+      totalAdv += adv;
+      totalDeductions += Math.round(cut);
+      netPayableSum += net;
+    });
+
+    document.getElementById('dashTotalGross').textContent = `Rs. ${totalGross.toLocaleString()}`;
+    document.getElementById('dashTotalAdvance').textContent = `Rs. ${totalAdv.toLocaleString()}`;
+    document.getElementById('dashTotalDeductions').textContent = `Rs. ${totalDeductions.toLocaleString()}`;
+    document.getElementById('dashNetPayable').textContent = `Rs. ${netPayableSum.toLocaleString()}`;
+
+    renderAttendanceLogs();
+    renderMissingPunches();
+    renderEmployees();
+    renderSalarySheets();
+    renderSundayDutyTable();
+    renderZKGridCards();
+    populateEmployeeDropdowns();
+  }
+
+  // --- UNIVERSAL 30-DAY SALARY & ATTENDANCE ENGINE (28, 29, 30, 31 DAY SAFE) ---
+  function getEmpStats(empId, monthStr) {
+    const emp = db.employees[empId] || {};
+    const hireDate = emp.hiredDate || `${monthStr}-01`;
+    let effectiveStart = hireDate > `${monthStr}-01` ? hireDate : `${monthStr}-01`;
+
+    const [y, mm] = monthStr.split('-').map(Number);
+    const actualDaysInMonth = new Date(y, mm, 0).getDate(); // 28, 29, 30, or 31
+    let monthEndStr = `${monthStr}-${String(actualDaysInMonth).padStart(2,'0')}`;
+
+    let leftDate = emp.leftDate || '';
+    if (leftDate && String(leftDate).slice(0, 7) === monthStr) {
+      if (leftDate < monthEndStr) monthEndStr = leftDate;
+    }
+
+    const shifts = db.processedShifts.filter(s => s.id === empId && s.month === monthStr && s.dutyDate >= effectiveStart && s.dutyDate <= monthEndStr);
+    const uniquePresentWorkingDays = new Set();
+    shifts.forEach(s => {
+      const dObj = new Date(s.dutyDate + 'T00:00:00');
+      const isSunday = dObj.getDay() === 0;
+      const isHol = (db.holidays || []).includes(s.dutyDate);
+      if (!isSunday && !isHol) {
+        if (s.hasIn || s.hasOut || db.manualStatus[`${empId}_${s.dutyDate}`] === 'Present') {
+          uniquePresentWorkingDays.add(s.dutyDate);
+        }
+      }
+    });
+    let presentDays = uniquePresentWorkingDays.size;
+
+    const startD = Number(String(effectiveStart).slice(8, 10));
+    const endD = Number(String(monthEndStr).slice(8, 10));
+    
+    let actualWorkingDays = 0, weeklyOffs = 0, holidaysCount = 0, medicalLeaves = 0, explicitAbsents = 0;
+    
+    for (let d = 1; d <= actualDaysInMonth; d++) {
+      const ds = `${monthStr}-${String(d).padStart(2,'0')}`;
+      const dObj = new Date(ds + 'T00:00:00');
+      if (dObj.getDay() === 0) weeklyOffs++;
+      else if ((db.holidays || []).includes(ds)) holidaysCount++;
+      else actualWorkingDays++;
+    }
+
+    for (let d = startD; d <= endD; d++) {
+      const ds = `${monthStr}-${String(d).padStart(2,'0')}`;
+      const dObj = new Date(ds + 'T00:00:00');
+      if (dObj.getDay() !== 0 && !(db.holidays || []).includes(ds)) {
+        const st = db.manualStatus[`${empId}_${ds}`];
+        if (st === 'Medical Leave') medicalLeaves++;
+        else if (st === 'Absent') explicitAbsents++;
+      }
+    }
+
+    // STANDARD 30-DAY PAYROLL RULE:
+    // Regardless of whether month has 28, 29, 30, or 31 days, standard salary days = 30.
+    // Absents are calculated purely against actual working days in that month (so Feb 28 never adds 2 fake absents, and 31-day months never add 1 extra day).
+    const standardSalaryDays = 30;
+    presentDays = Math.min(presentDays, actualWorkingDays);
+    
+    let currentAbsents = 0, leavesUsed = 0, remainingBalance = 0, totalAbsents = 0;
+    let openingPending = Number(emp.openingPending) || 0;
+    let currentMonthAllowedLeaves = 2;
+
+    if (presentDays === 0) {
+      currentAbsents = 30;
+      totalAbsents = 30;
+      openingPending = 0;
+      currentMonthAllowedLeaves = 0;
+    } else {
+      // If hired mid-month, account for days before hire date as non-working
+      let preHireWorkingDays = 0;
+      for (let d = 1; d < startD; d++) {
+        const ds = `${monthStr}-${String(d).padStart(2,'0')}`;
+        const dObj = new Date(ds + 'T00:00:00');
+        if (dObj.getDay() !== 0 && !(db.holidays || []).includes(ds)) preHireWorkingDays++;
+      }
+
+      const activeWorkingDays = Math.max(0, actualWorkingDays - preHireWorkingDays);
+      const rawAbsent = Math.max(0, activeWorkingDays - presentDays);
+      currentAbsents = explicitAbsents + Math.max(0, rawAbsent - medicalLeaves);
+      
+      const hireYearMonth = String(hireDate).slice(0, 7);
+      if (hireYearMonth === monthStr) {
+        const hireDay = Number(String(hireDate).slice(8, 10));
+        if (hireDay >= 1 && hireDay <= 10) currentMonthAllowedLeaves = 2;
+        else if (hireDay >= 11 && hireDay <= 20) currentMonthAllowedLeaves = 1;
+        else currentMonthAllowedLeaves = 0;
+      }
+
+      let totalQuota = openingPending + currentMonthAllowedLeaves;
+      leavesUsed = Math.min(currentAbsents, totalQuota);
+      remainingBalance = Math.max(0, totalQuota - leavesUsed);
+      totalAbsents = Math.min(30, Math.max(0, currentAbsents - leavesUsed));
+    }
+
+    return { 
+      workingDays: standardSalaryDays, // ALWAYS 30 DAYS
+      presentDays, 
+      weeklyOffs, 
+      holidaysCount, 
+      medicalLeaves, 
+      openingPending, 
+      currentMonthAllowedLeaves, 
+      totalQuota: openingPending + currentMonthAllowedLeaves, 
+      leavesUsed, 
+      remainingBalance, 
+      currentAbsents, 
+      totalAbsents 
+    };
+  }
+
+  function openSmartManualLogModal() {
+    populateSmartLogDropdown();
+    previewSmartManualLogs();
+    document.getElementById('smartManualLogModal').style.display = 'flex';
+  }
+
+  function populateSmartLogDropdown() {
+    const sel = document.getElementById('smartLogEmpSelect');
+    if (!sel) return;
+    const list = getActiveEmployees();
+    sel.innerHTML = `<option value="ALL">All Employees</option>` + list.map(e => `<option value="${e.id}">${e.id} - ${e.name}</option>`).join('');
+  }
+
+  function previewSmartManualLogs() {
+    const m = document.getElementById('globalMonth').value;
+    const selectedEmpId = document.getElementById('smartLogEmpSelect')?.value || 'ALL';
+    const cat = document.getElementById('smartLogCategory').value;
+    const shiftFilter = document.getElementById('smartLogShiftFilter').value;
+    const [y, mm] = m.split('-').map(Number);
+    const lastDay = new Date(y, mm, 0).getDate();
+
+    const activeEmps = getActiveEmployees().filter(e => selectedEmpId === 'ALL' || e.id === selectedEmpId);
+    const candidates = [];
+
+    activeEmps.forEach(emp => {
+      const hireDate = emp.hiredDate || `${m}-01`;
+      const startD = Number(String(hireDate > `${m}-01` ? hireDate : `${m}-01`).slice(8, 10));
+
+      for (let d = startD; d <= lastDay; d++) {
+        const ds = `${m}-${String(d).padStart(2,'0')}`;
+        if (new Date(ds + 'T00:00:00').getDay() === 0 || (db.holidays || []).includes(ds)) continue;
+
+        const effShift = getEffectiveShiftForDate(emp.id, ds).toLowerCase();
+        const isNight = effShift.includes('p/n') || effShift.includes('night');
+        if (shiftFilter === 'DAY' && isNight) continue;
+        if (shiftFilter === 'NIGHT' && !isNight) continue;
+
+        const shiftRec = db.processedShifts.find(s => s.id === emp.id && s.dutyDate === ds);
+
+        if (shiftRec) {
+          if (!isNight && shiftRec.hasIn && shiftRec.rawInTime && shiftRec.rawInTime > '06:30') {
+            if (cat === 'LATE_AND_EARLY' || cat === 'ALL_COMBINED') {
+              candidates.push({ id: emp.id, name: emp.name, shift: isNight ? 'Night' : 'Day', date: ds, issue: 'Late Check-In (>06:30)', actual: shiftRec.rawInTime, generatedTime: `${ds} 06:00:00`, punchState: '0 (Check-In)' });
+            }
+          }
+          if (!isNight && shiftRec.hasOut && shiftRec.rawOutTime && shiftRec.rawOutTime < '17:30') {
+            if (cat === 'LATE_AND_EARLY' || cat === 'ALL_COMBINED') {
+              candidates.push({ id: emp.id, name: emp.name, shift: isNight ? 'Night' : 'Day', date: ds, issue: 'Early Out (<17:30)', actual: shiftRec.rawOutTime, generatedTime: `${ds} 18:00:00`, punchState: '1 (Check-Out)' });
+            }
+          }
+          if (!shiftRec.hasIn || !shiftRec.hasOut) {
+            if (cat === 'SINGLE_MISSING' || cat === 'ALL_COMBINED') {
+              const isInMiss = !shiftRec.hasIn;
+              const fixTime = isInMiss ? (isNight ? '18:00:00' : '06:00:00') : (isNight ? '06:00:00' : '18:00:00');
+              candidates.push({ id: emp.id, name: emp.name, shift: isNight ? 'Night' : 'Day', date: ds, issue: isInMiss ? 'In Missing' : 'Out Missing', actual: isInMiss ? `Out: ${shiftRec.rawOutTime}` : `In: ${shiftRec.rawInTime}`, generatedTime: `${ds} ${fixTime}`, punchState: isInMiss ? '0 (Check-In)' : '1 (Check-Out)' });
+            }
+          }
+        } else {
+          if (cat === 'NO_DUTY_ABSENT' || cat === 'ALL_COMBINED') {
+            candidates.push({ id: emp.id, name: emp.name, shift: isNight ? 'Night' : 'Day', date: ds, issue: 'No Duty (Both Missing)', actual: 'No Punch', generatedTime: `${ds} ${isNight ? '18:00:00' : '06:00:00'}`, punchState: '0 (Check-In)' });
+          }
+        }
+      }
+    });
+
+    smartManualLogCandidates = candidates;
+    const tb = document.getElementById('smartManualLogPreviewBody');
+    if (tb) {
+      tb.innerHTML = candidates.map((c, idx) => `
+        <tr>
+          <td><input type="checkbox" class="smart-log-chk" data-idx="${idx}" checked /></td>
+          <td>${c.id}</td>
+          <td><strong>${c.name}</strong></td>
+          <td><span class="badge ${c.shift === 'Night' ? 'b-night' : 'b-day'}">${c.shift}</span></td>
+          <td>${c.date}</td>
+          <td><span class="badge b-miss" style="background:#fee2e2; color:#b91c1c;">${c.issue}</span></td>
+          <td>${c.actual}</td>
+          <td style="color:var(--success); font-weight:700;">${c.generatedTime}</td>
+          <td>${c.punchState}</td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  function toggleAllSmartCheckboxes(checked) {
+    document.querySelectorAll('.smart-log-chk').forEach(cb => cb.checked = checked);
+  }
+
+  function downloadSmartManualLogExcel() {
+    const selectedIndices = Array.from(document.querySelectorAll('.smart-log-chk:checked')).map(cb => Number(cb.dataset.idx));
+    if (selectedIndices.length === 0) return alert('Kam az kam aik entry select karein!');
+
+    const exportRows = selectedIndices.map(idx => {
+      const c = smartManualLogCandidates[idx];
+      return { "Employee ID": c.id, "Punch Time": c.generatedTime, "Punch State": c.punchState.startsWith('0') ? "0" : "1", "Work Code": "0", "Apply Reason": c.issue };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(exportRows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "ZKTeco_Manual_Logs");
+    XLSX.writeFile(wb, `ZKTeco_Smart_Manual_Logs_${document.getElementById('globalMonth').value}.xls`);
+    alert(`Downloaded ${exportRows.length} ZKTeco manual punch records!`);
+  }
+
+  function openSalarySlipModal() {
+    populateEmployeeDropdowns();
+    renderSalarySlipDetails();
+    document.getElementById('salarySlipModal').style.display = 'flex';
+  }
+
+  function renderSalarySlipDetails() {
+    const empId = document.getElementById('slipEmpSelect').value;
+    const m = document.getElementById('globalMonth').value;
+    const container = document.getElementById('salarySlipCardBody');
+    if (!container || !empId) return;
+
+    const emp = db.employees[empId] || {};
+    const stats = getEmpStats(empId, m);
+    const perDay = emp.salary / 30; // STRICT 30 DAYS
+    const adv = getTotalAdvanceForMonth(empId, m);
+    const cut = stats.totalAbsents * perDay;
+    const net = stats.presentDays === 0 ? 0 : Math.max(0, Math.round(emp.salary - cut - adv));
+
+    container.innerHTML = `
+      <div style="border-bottom: 2px solid var(--primary); padding-bottom: 12px; margin-bottom: 16px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <h2 style="margin:0; color:var(--primary);">FAFFCO PET INDUSTRIES</h2>
+          <small style="color:var(--muted);">Official Monthly Salary Slip - ${m} (30-Day Standard)</small>
+        </div>
+        <div style="text-align:right;">
+          <strong>ID: ${emp.id}</strong><br/>
+          <span class="badge b-day">${emp.shift}</span>
+        </div>
+      </div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; font-size:13px;">
+        <div><strong>Employee Name:</strong> ${emp.name}</div>
+        <div><strong>Position:</strong> ${emp.position}</div>
+        <div><strong>Category:</strong> ${emp.category}</div>
+        <div><strong>Basic Salary:</strong> Rs. ${Number(emp.salary).toLocaleString()}</div>
+      </div>
+      <table style="width:100%; border-collapse:collapse; margin-bottom:16px; font-size:13px;">
+        <tr style="background:#f8fafc;"><th style="border:1px solid var(--border); padding:8px;">Description</th><th style="border:1px solid var(--border); padding:8px; text-align:right;">Days / Value</th></tr>
+        <tr><td style="border:1px solid var(--border); padding:8px;">Standard Salary Days (Fixed)</td><td style="border:1px solid var(--border); padding:8px; text-align:right;">30 Days</td></tr>
+        <tr><td style="border:1px solid var(--border); padding:8px;">Present Days</td><td style="border:1px solid var(--border); padding:8px; text-align:right; color:var(--success); font-weight:700;">${stats.presentDays} Days</td></tr>
+        <tr><td style="border:1px solid var(--border); padding:8px;">Weekly Offs (Sundays)</td><td style="border:1px solid var(--border); padding:8px; text-align:right;">${stats.weeklyOffs} Days</td></tr>
+        <tr><td style="border:1px solid var(--border); padding:8px;">Holidays</td><td style="border:1px solid var(--border); padding:8px; text-align:right;">${stats.holidaysCount} Days</td></tr>
+        <tr><td style="border:1px solid var(--border); padding:8px;">Allowed Quota Leaves (Opening + Current)</td><td style="border:1px solid var(--border); padding:8px; text-align:right;">${stats.totalQuota} Days</td></tr>
+        <tr><td style="border:1px solid var(--border); padding:8px;">Leaves Taken / Absents</td><td style="border:1px solid var(--border); padding:8px; text-align:right; color:var(--warning); font-weight:700;">${stats.currentAbsents} Days</td></tr>
+        <tr><td style="border:1px solid var(--border); padding:8px;">Unpaid Salary Cut (Absents Exceeding Quota)</td><td style="border:1px solid var(--border); padding:8px; text-align:right; color:var(--danger); font-weight:700;">Rs. ${Math.round(cut).toLocaleString()} (${stats.totalAbsents} Days)</td></tr>
+        <tr><td style="border:1px solid var(--border); padding:8px;">Advance / Loan Taken</td><td style="border:1px solid var(--border); padding:8px; text-align:right; color:var(--warning); font-weight:700;">Rs. ${adv.toLocaleString()}</td></tr>
+        <tr style="background:#eff6ff; font-weight:700; font-size:15px;">
+          <td style="border:1px solid var(--border); padding:10px;">Net Payable Salary</td>
+          <td style="border:1px solid var(--border); padding:10px; text-align:right; color:var(--primary);">Rs. ${net.toLocaleString()}</td>
+        </tr>
+      </table>
+      <div style="display:flex; justify-content:space-between; margin-top:30px; font-size:12px; color:var(--muted);">
+        <div>Employee Signature: ___________________</div>
+        <div>Authorized Stamp / Manager: ___________________</div>
+      </div>
+    `;
+  }
+
+  function exportSalarySlipPDF() {
+    const element = document.getElementById('salarySlipCardBody');
+    const empId = document.getElementById('slipEmpSelect').value;
+    const emp = db.employees[empId] || { name: 'Employee' };
+    const m = document.getElementById('globalMonth').value;
+    const opt = {
+      margin:       10,
+      filename:     `Salary_Slip_${emp.id}_${emp.name}_${m}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().from(element).set(opt).save();
+  }
+
+  function showShiftWorkersModal(shiftType) {
+    const filterDate = document.getElementById('filterDate').value;
+    const isNight = shiftType === 'NIGHT';
+    document.getElementById('shiftModalTitle').textContent = isNight ? '🌙 Active Night Shift Workers' : '☀️ Active Day Shift Workers';
+    
+    const emps = getActiveEmployees().filter(e => {
+      const s = getEffectiveShiftForDate(e.id, filterDate).toLowerCase();
+      return isNight ? (s.includes('p/n') || s.includes('night')) : (!s.includes('p/n') && !s.includes('night'));
+    }).sort((a, b) => Number(a.id) - Number(b.id));
+
+    document.getElementById('shiftWorkersModalBody').innerHTML = emps.map(e => {
+      const effS = getEffectiveShiftForDate(e.id, filterDate);
+      return `
+        <tr>
+          <td>${e.id}</td>
+          <td><strong>${e.name}</strong></td>
+          <td>${e.position}</td>
+          <td><span class="badge ${isNight ? 'b-night' : 'b-day'}">${effS}</span></td>
+          <td>Rs. ${Number(e.salary).toLocaleString()}</td>
+          <td><span class="badge b-ok">Active</span></td>
+        </tr>
+      `;
+    }).join('');
+    document.getElementById('shiftWorkersModal').style.display = 'flex';
+  }
+
+  function showTodayAbsentModal() {
+    const filterDate = document.getElementById('filterDate').value;
+    document.getElementById('todayModalDate').textContent = filterDate;
+    const presentIDs = getPresentIDsForDate(filterDate);
+    const activeEmps = getActiveEmployees().filter(e => !presentIDs.has(e.id));
+
+    document.getElementById('todayAbsentModalBody').innerHTML = activeEmps.map(e => `
+      <tr>
+        <td>${e.id}</td>
+        <td><strong>${e.name}</strong></td>
+        <td>${e.position}</td>
+        <td>${getEffectiveShiftForDate(e.id, filterDate)}</td>
+        <td style="color:var(--danger); font-weight:700;">${filterDate}</td>
+        <td><span class="badge b-miss" style="background:#fee2e2; color:#dc2626;">1 Day</span></td>
+      </tr>
+    `).join('');
+    document.getElementById('todayAbsentModal').style.display = 'flex';
+  }
+
+  function showLeavesSummaryModal() {
+    renderLeavesSummaryTable();
+    document.getElementById('leavesSummaryModal').style.display = 'flex';
+  }
+
+  function renderLeavesSummaryTable() {
+    const m = document.getElementById('globalMonth').value;
+    const q = (document.getElementById('leaveSumSearch')?.value || '').toLowerCase();
+    const tb = document.getElementById('leavesSummaryBody');
+    if (!tb) return;
+
+    const list = getActiveEmployees().filter(e => !q || e.name.toLowerCase().includes(q) || e.id.includes(q)).sort((a, b) => Number(a.id) - Number(b.id));
+
+    tb.innerHTML = list.map(emp => {
+      const stats = getEmpStats(emp.id, m);
+      return `
+        <tr>
+          <td>${emp.id}</td>
+          <td><strong>${emp.name}</strong></td>
+          <td>${emp.position}</td>
+          <td style="color:var(--success); font-weight:700;">${stats.presentDays}</td>
+          <td>${stats.weeklyOffs}</td>
+          <td style="color:var(--primary);">${stats.holidaysCount}</td>
+          <td>${stats.openingPending}</td>
+          <td>${stats.currentMonthAllowedLeaves}</td>
+          <td><strong>${stats.totalQuota}</strong></td>
+          <td style="color:var(--warning); font-weight:700;">${stats.leavesUsed}</td>
+          <td style="color:var(--success); font-weight:700;">${stats.remainingBalance}</td>
+          <td style="color:var(--danger); font-weight:700;">${stats.totalAbsents}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function exportLeavesSummaryExcel() {
+    XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('leavesSummaryBody').parentElement, { sheet: "Leaves_Summary" }), "Leaves_Summary_Balance.xlsx");
+  }
+
+  function exportLeavesSummaryPDF() {
+    const element = document.getElementById('leavesSummaryPrintArea');
+    const m = document.getElementById('globalMonth').value;
+    const opt = {
+      margin: 5, filename: `Leaves_Summary_${m}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+    };
+    html2pdf().from(element).set(opt).save();
+  }
+
+  function renderZKGridCards() {
+    const m = document.getElementById('globalMonth').value;
+    const q = (document.getElementById('zkGridSearch')?.value || '').toLowerCase();
+    const shiftFilter = document.getElementById('zkGridShiftFilter').value;
+    const container = document.getElementById('zkGridContainer');
+    if (!container) return;
+
+    const [y, mm] = m.split('-').map(Number);
+    const lastDay = new Date(y, mm, 0).getDate();
+    const emps = getActiveEmployees().filter(e => {
+      if (shiftFilter !== 'ALL' && e.shift !== shiftFilter) return false;
+      if (q && !e.name.toLowerCase().includes(q) && !e.id.includes(q)) return false;
+      return true;
+    }).sort((a, b) => Number(a.id) - Number(b.id));
+
+    container.innerHTML = emps.map(emp => {
+      let cellsHtml = '';
+      let totalAbsents = 0, totalPresent = 0, inMiss = 0, outMiss = 0;
+
+      for (let d = 1; d <= lastDay; d++) {
+        const ds = `${m}-${String(d).padStart(2,'0')}`;
+        const dObj = new Date(ds + 'T00:00:00');
+        const dayName = dObj.toLocaleDateString('en-US', { weekday: 'short' });
+        const isSun = dObj.getDay() === 0;
+        const isHol = (db.holidays || []).includes(ds);
+        const shiftRec = db.processedShifts.find(s => s.id === emp.id && s.dutyDate === ds);
+
+        let timeStr = '';
+        let cls = 'zk-cell';
+        if (isSun || isHol) cls += ' sun';
+
+        if (shiftRec) {
+          const tIn = shiftRec.rawInTime || '';
+          const tOut = shiftRec.rawOutTime || '';
+          timeStr = `${tIn}-${tOut}`;
+          if (!shiftRec.hasIn) inMiss++;
+          if (!shiftRec.hasOut) outMiss++;
+          if (shiftRec.hasIn || shiftRec.hasOut) totalPresent++;
+
+          if (tIn > '06:30' || (tOut && tOut < '17:30')) cls += ' late';
+          else cls += ' ok-cell';
+        } else {
+          if (!isSun && !isHol) {
+            totalAbsents++;
+            cls += ' miss';
+            timeStr = 'ABS';
+          } else {
+            cls += ' sun';
+            timeStr = isSun ? 'SUN' : 'HOL';
+          }
+        }
+        cellsHtml += `<div class="${cls}"><div><strong>${String(d).padStart(2,'0')} ${dayName}</strong></div><div>${timeStr}</div></div>`;
+      }
+
+      return `
+        <div class="zk-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:6px; flex-wrap:wrap; gap:8px;">
+            <div><strong>ID ${emp.id} - ${emp.name}</strong> <span style="color:var(--muted);">(${emp.position} - ${emp.shift})</span></div>
+            <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+              <span class="summary-tag" style="background:#dcfce7; color:#16a34a;">Present: ${totalPresent}</span>
+              <span class="summary-tag" style="background:#fee2e2; color:#dc2626;">Chuttiyan (Abs): ${totalAbsents}</span>
+              <span class="summary-tag" style="background:#fef3c7; color:#b45309;">In Miss: ${inMiss}</span>
+              <span class="summary-tag" style="background:#fef3c7; color:#b45309;">Out Miss: ${outMiss}</span>
+            </div>
+          </div>
+          <div class="zk-grid">${cellsHtml}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function exportZKGridExcel() {
+    const m = document.getElementById('globalMonth').value;
+    const shiftFilter = document.getElementById('zkGridShiftFilter').value;
+    const [y, mm] = m.split('-').map(Number);
+    const lastDay = new Date(y, mm, 0).getDate();
+    const emps = getActiveEmployees().filter(e => shiftFilter === 'ALL' || e.shift === shiftFilter).sort((a, b) => Number(a.id) - Number(b.id));
+
+    const exportRows = emps.map(emp => {
+      let row = { "ID": emp.id, "Name": emp.name, "Position": emp.position, "Shift": emp.shift };
+      for (let d = 1; d <= lastDay; d++) {
+        const ds = `${m}-${String(d).padStart(2,'0')}`;
+        const shiftRec = db.processedShifts.find(s => s.id === emp.id && s.dutyDate === ds);
+        row[`${d}`] = shiftRec ? `${shiftRec.rawInTime}-${shiftRec.rawOutTime}` : 'ABS';
+      }
+      return row;
+    });
+
+    const ws = XLSX.utils.json_to_sheet(exportRows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, `TimeCard_${shiftFilter}`);
+    XLSX.writeFile(wb, `ZKTeco_Grid_${shiftFilter}_${m}.xlsx`);
+  }
+
+  function exportZKGridPDF() {
+    const element = document.getElementById('zkGridContainer');
+    const shiftFilter = document.getElementById('zkGridShiftFilter').value;
+    const m = document.getElementById('globalMonth').value;
+    const opt = {
+      margin: 5, filename: `ZKTeco_TimeCard_${shiftFilter}_${m}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+    };
+    html2pdf().from(element).set(opt).save();
+  }
+
+  function getTotalAdvanceForMonth(empId, monthStr) {
+    if (!db.advancesList) return Number(db.advances?.[`${monthStr}_${empId}`]) || 0;
+    let sum = 0;
+    db.advancesList.forEach(a => {
+      if (String(a.id) === String(empId) && a.month === monthStr) sum += Number(a.amount) || 0;
+    });
+    return sum;
+  }
+
+  function renderAttendanceLogs() {
+    const m = document.getElementById('globalMonth').value;
+    const q = document.getElementById('logSearch').value.toLowerCase();
+    const f = document.getElementById('logShiftFilter').value;
+
+    let filtered = db.processedShifts.filter(s => {
+      const emp = db.employees[s.id];
+      if (!emp || (emp.status || 'Active') !== 'Active') return false;
+      if (s.month !== m) return false;
+      if (q && !s.name.toLowerCase().includes(q) && !s.id.includes(q)) return false;
+      if (f !== 'ALL' && s.shiftType !== f) return false;
+      return true;
+    });
+
+    filtered.sort((a, b) => {
+      let valA = logSortField === 'id' ? Number(a.id) : a.name.toLowerCase();
+      let valB = logSortField === 'id' ? Number(b.id) : b.name.toLowerCase();
+      if (valA < valB) return logSortAsc ? -1 : 1;
+      if (valA > valB) return logSortAsc ? 1 : -1;
+      return 0;
+    });
+
+    const tb = document.getElementById('attTableBody');
+    if (tb) {
+      tb.innerHTML = filtered.map(s => {
+        let bCls = s.shiftType === 'NIGHT' ? 'b-night' : 'b-day';
+        let emp = db.employees[s.id] || {};
+        let statusColor = s.status === 'OK' ? 'color:var(--success); font-weight:700;' : 'color:var(--danger); font-weight:700;';
+        return `<tr><td>${s.id}</td><td><strong>${emp.name || s.name}</strong></td><td>${emp.position || 'Worker'}</td><td><span class="badge ${bCls}">${s.shiftType}</span></td><td>${s.dutyDate}</td><td>${s.checkIn}</td><td>${s.checkOut}</td><td>${s.totalHrs}h</td><td style="${statusColor}">${s.status}</td></tr>`;
+      }).join('');
+    }
+  }
+
+  function sortLogsBy(field) {
+    if (logSortField === field) logSortAsc = !logSortAsc;
+    else { logSortField = field; logSortAsc = true; }
+    renderAttendanceLogs();
+  }
+
+  function toggleLogSortOrder() { logSortAsc = !logSortAsc; renderAttendanceLogs(); }
+  function exportAttendanceLogsExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('attTableBody').parentElement, { sheet: "Attendance_Logs" }), "Attendance_Logs.xlsx"); }
+
+  function openWhatsAppAlertModal() { generateWhatsAppText(); document.getElementById('whatsappAlertModal').style.display = 'flex'; }
+  function generateWhatsAppText() {
+    const reportDate = document.getElementById('waReportDate').value || new Date().toISOString().slice(0, 10);
+    const activeEmps = getActiveEmployees();
+    const presentIDs = getPresentIDsForDate(reportDate);
+    const presentList = activeEmps.filter(e => presentIDs.has(e.id));
+    const absentList = activeEmps.filter(e => {
+      if (e.hiredDate && e.hiredDate > reportDate) return false;
+      if (new Date(reportDate + 'T00:00:00').getDay() === 0 || (db.holidays || []).includes(reportDate)) return false;
+      return !presentIDs.has(e.id);
+    });
+
+    let text = `🏭 *FAFFCO PET INDUSTRIES - DAILY REPORT* 🏭\n📅 *Date:* ${reportDate}\n\n✅ *Present:* ${presentList.length}\n❌ *Absent:* ${absentList.length}\n\n🚨 *ABSENT WORKERS:*\n`;
+    absentList.forEach((e, idx) => { text += `${idx + 1}. ID ${e.id} - ${e.name} (${e.position})\n`; });
+    document.getElementById('waMessageText').value = text;
+  }
+  function copyWhatsAppText() { navigator.clipboard.writeText(document.getElementById('waMessageText').value); alert('Copied!'); }
+  function sendViaWhatsAppWeb() { window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(document.getElementById('waMessageText').value)}`, '_blank'); }
+
+  function renderMissingPunches() {
+    const m = document.getElementById('globalMonth').value;
+    const filterType = document.getElementById('missingTypeFilter').value;
+    const specificDate = document.getElementById('missingDateFilter').value;
+    const [y, mm] = m.split('-').map(Number);
+    const lastDay = new Date(y, mm, 0).getDate();
+
+    let rows = [];
+    getActiveEmployees().forEach(emp => {
+      const hireDate = emp.hiredDate || `${m}-01`;
+      const startD = Number(String(hireDate > `${m}-01` ? hireDate : `${m}-01`).slice(8, 10));
+      for (let d = startD; d <= lastDay; d++) {
+        const ds = `${m}-${String(d).padStart(2,'0')}`;
+        if (specificDate && ds !== specificDate) continue;
+        if (new Date(ds + 'T00:00:00').getDay() === 0 || (db.holidays || []).includes(ds)) continue;
+
+        const shiftRec = db.processedShifts.find(s => s.id === emp.id && s.dutyDate === ds);
+        const manualSt = db.manualStatus[`${emp.id}_${ds}`] || '';
+        let mType = '';
+        if (shiftRec) {
+          if (!shiftRec.hasIn && !shiftRec.hasOut) mType = 'Both Missing';
+          else if (!shiftRec.hasIn) mType = 'In Missing';
+          else if (!shiftRec.hasOut) mType = 'Out Missing';
+          else if (manualSt !== 'Medical Leave' && manualSt !== 'Absent') continue;
+        } else mType = 'Both Missing';
+
+        if (manualSt === 'Medical Leave') mType = 'Medical Leave';
+        else if (manualSt === 'Absent') mType = 'Absent';
+        else if (manualSt === 'Present') continue;
+
+        if (filterType !== 'ALL' && mType !== filterType) continue;
+        rows.push({ id: emp.id, name: emp.name, date: ds, mType, key: `${emp.id}_${ds}`, currentStatus: manualSt });
+      }
+    });
+
+    const tb = document.getElementById('missingTableBody');
+    if (tb) {
+      tb.innerHTML = rows.map(r => `
+        <tr>
+          <td>${r.id}</td><td><strong>${r.name}</strong></td><td>${r.date}</td><td><span class="badge" style="background:#fee2e2; color:#b91c1c;">${r.mType}</span></td>
+          <td>-</td>
+          <td>
+            <select onchange="updateManualStatus('${r.key}', this.value)" style="padding:4px; font-weight:700;">
+              <option value="">Select...</option>
+              <option value="Present" ${r.currentStatus === 'Present' ? 'selected' : ''}>✅ Present</option>
+              <option value="Medical Leave" ${r.currentStatus === 'Medical Leave' ? 'selected' : ''}>🏥 Medical Leave</option>
+              <option value="Absent" ${r.currentStatus === 'Absent' ? 'selected' : ''}>❌ Absent</option>
+            </select>
+          </td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  function updateManualStatus(key, val) { db.manualStatus[key] = val; saveDB(); refreshDashboard(); }
+  function exportMissingExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('missingTableBody').parentElement, { sheet: "Missing" }), "Missing_Punches.xlsx"); }
+
+  function renderEmployees() {
+    const q = document.getElementById('empSearch').value.toLowerCase();
+    const statusFilter = document.getElementById('empActiveFilter').value;
+    const list = Object.values(db.employees).sort((a, b) => Number(a.id) - Number(b.id));
+    const tb = document.getElementById('empTableBody');
+    if (tb) {
+      tb.innerHTML = list.filter(e => {
+        const st = e.status || 'Active';
+        if (statusFilter === 'ACTIVE' && st !== 'Active') return false;
+        if (statusFilter === 'LEFT' && st !== 'Left') return false;
+        if (q && !e.name.toLowerCase().includes(q) && !e.id.includes(q)) return false;
+        return true;
+      }).map(emp => `
+        <tr data-id="${emp.id}" style="${(emp.status || 'Active') === 'Left' ? 'background:#fee2e2;' : ''}">
+          <td>${emp.id}</td><td><strong>${emp.name}</strong></td>
+          <td><input type="text" class="emp-pos" value="${emp.position || 'Worker'}" style="width:120px;" /></td>
+          <td><input type="date" class="emp-hired" value="${emp.hiredDate || '2025-01-01'}" style="width:120px;" /></td>
+          <td><input type="date" class="emp-left" value="${emp.leftDate || ''}" style="width:120px;" /></td>
+          <td><select class="emp-shift"><option value="Day Shift" ${emp.shift==='Day Shift'?'selected':''}>Day</option><option value="Night Shift" ${emp.shift==='Night Shift'?'selected':''}>Night</option><option value="p/d" ${emp.shift==='p/d'?'selected':''}>p/d</option><option value="p/n" ${emp.shift==='p/n'?'selected':''}>p/n</option></select></td>
+          <td><select class="emp-cat"><option value="Junior" ${emp.category==='Junior'?'selected':''}>Junior</option><option value="Senior" ${emp.category==='Senior'?'selected':''}>Senior</option></select></td>
+          <td><input type="number" class="num-in emp-sal" value="${emp.salary}" /></td>
+          <td><input type="number" class="num-in emp-pend" value="${emp.openingPending || 0}" /></td>
+          <td><select class="emp-status"><option value="Active" ${emp.status==='Active'?'selected':''}>Active</option><option value="Left" ${emp.status==='Left'?'selected':''}>Left</option></select></td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  function saveEmployeeSettings() {
+    document.querySelectorAll('#empTableBody tr').forEach(tr => {
+      const id = tr.dataset.id;
+      if (db.employees[id]) {
+        db.employees[id].position = tr.querySelector('.emp-pos').value;
+        db.employees[id].hiredDate = tr.querySelector('.emp-hired').value;
+        db.employees[id].leftDate = tr.querySelector('.emp-left').value;
+        db.employees[id].shift = tr.querySelector('.emp-shift').value;
+        db.employees[id].category = tr.querySelector('.emp-cat').value;
+        db.employees[id].salary = Number(tr.querySelector('.emp-sal').value) || 0;
+        db.employees[id].openingPending = Number(tr.querySelector('.emp-pend').value) || 0;
+        db.employees[id].status = tr.querySelector('.emp-status').value;
+      }
+    });
+    if (rawPunchesMem.length > 0) reconstructShiftsExcludingOffDays();
+    saveDB(); refreshDashboard(); alert('Saved & Updated Successfully!');
+  }
+
+  function openAddEmployeeModal() { document.getElementById('addEmployeeModal').style.display = 'flex'; }
+  function addNewEmployeeRecord() {
+    const id = document.getElementById('newEmpId').value.trim();
+    const name = document.getElementById('newEmpName').value.trim();
+    if (!id || !name) return alert('ID & Name required!');
+    db.employees[id] = { id, name, position: document.getElementById('newEmpPosition').value, shift: document.getElementById('newEmpShift').value, category: document.getElementById('newEmpCategory').value, salary: Number(document.getElementById('newEmpSalary').value), hiredDate: document.getElementById('newEmpHired').value, leftDate: document.getElementById('newEmpLeft').value, openingPending: Number(document.getElementById('newEmpPending').value), status: 'Active' };
+    saveDB(); refreshDashboard(); closeModal('addEmployeeModal'); alert('Added!');
+  }
+
+  function renderSalarySheets() {
+    const m = document.getElementById('globalMonth').value;
+    ['Senior', 'Junior'].forEach(cat => {
+      const tbody = document.getElementById(cat === 'Senior' ? 'seniorSalaryBody' : 'juniorSalaryBody');
+      if (!tbody) return;
+      const list = getActiveEmployees().filter(e => e.category === cat).sort((a, b) => Number(a.id) - Number(b.id));
+      tbody.innerHTML = list.map(emp => {
+        const stats = getEmpStats(emp.id, m);
+        const perDay = emp.salary / 30; // ALWAYS 30 DAYS
+        const adv = getTotalAdvanceForMonth(emp.id, m);
+        const net = stats.presentDays === 0 ? 0 : Math.max(0, Math.round(emp.salary - (stats.totalAbsents * perDay) - adv));
+
+        return `
+          <tr>
+            <td>${emp.id}</td><td><strong>${emp.name}</strong></td><td>${emp.position}</td><td>${emp.salary.toLocaleString()}</td>
+            <td>30</td><td>${stats.presentDays}</td><td>${stats.weeklyOffs}</td><td>${stats.holidaysCount}</td>
+            <td style="color:var(--primary);">${stats.medicalLeaves}</td><td>${stats.openingPending}</td><td>${stats.currentMonthAllowedLeaves}</td>
+            <td>${stats.currentAbsents}</td><td style="color:var(--danger); font-weight:700;">${stats.totalAbsents}</td>
+            <td><strong>${adv.toLocaleString()}</strong></td>
+            <td><strong>${net.toLocaleString()}</strong></td>
+          </tr>
+        `;
+      }).join('');
+    });
+  }
+
+  function openSingleAdvanceModal() { populateEmployeeDropdowns(); document.getElementById('singleAdvanceModal').style.display = 'flex'; }
+  function saveSingleAdvance() {
+    const empId = document.getElementById('advEmpSelect').value;
+    const advDate = document.getElementById('advDate').value || new Date().toISOString().slice(0, 10);
+    const mo = document.getElementById('advMonth').value;
+    const amt = Number(document.getElementById('advAmount').value) || 0;
+    if (!empId || amt <= 0) return alert('Employee aur valid amount enter karein!');
+    
+    if (!db.advancesList) db.advancesList = [];
+    db.advancesList.push({ uid: Date.now(), id: empId, date: advDate, month: mo, amount: amt });
+    saveDB(); refreshDashboard(); closeModal('singleAdvanceModal'); alert('Advance Saved Successfully!');
+  }
+
+  function openAdvanceLedgerModal() {
+    document.getElementById('advLedgerMonthFilter').value = document.getElementById('globalMonth').value;
+    renderAdvanceLedger();
+    document.getElementById('advanceLedgerModal').style.display = 'flex';
+  }
+  function renderAdvanceLedger() {
+    const monthFilter = document.getElementById('advLedgerMonthFilter').value;
+    const tb = document.getElementById('advanceLedgerBody');
+    if (!tb) return;
+
+    if (!db.advancesList) db.advancesList = [];
+    let filtered = db.advancesList;
+    if (monthFilter) filtered = db.advancesList.filter(a => a.month === monthFilter);
+
+    tb.innerHTML = filtered.map(a => {
+      const emp = db.employees[a.id] || { name: 'Unknown', position: '-' };
+      return `
+        <tr>
+          <td>${a.id}</td><td><strong>${emp.name}</strong></td><td>${emp.position}</td>
+          <td>${a.date}</td><td><span class="badge b-day">${a.month}</span></td>
+          <td style="color:var(--success); font-weight:700;">Rs. ${Number(a.amount).toLocaleString()}</td>
+          <td><button class="btn-danger" style="padding:3px 6px;" onclick="deleteAdvanceItem(${a.uid})">Delete</button></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function deleteAdvanceItem(uid) {
+    if (!confirm('Kya aap is advance entry ko delete karna chahte hain?')) return;
+    db.advancesList = db.advancesList.filter(a => a.uid !== uid);
+    saveDB(); renderAdvanceLedger(); refreshDashboard();
+  }
+
+  function exportAdvanceLedgerExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('advanceLedgerBody').parentElement, { sheet: "Advance_Ledger" }), "Advance_Ledger.xlsx"); }
+
+  function openLeaveLedgerModal() { populateEmployeeDropdowns(); renderLeaveLedger(); document.getElementById('leaveLedgerModal').style.display = 'flex'; }
+  function populateEmployeeDropdowns() {
+    const list = getActiveEmployees();
+    const opts = list.map(e => `<option value="${e.id}">${e.id} - ${e.name}</option>`).join('');
+    if (document.getElementById('advEmpSelect')) document.getElementById('advEmpSelect').innerHTML = opts;
+    if (document.getElementById('ledgerEmpSelect')) document.getElementById('ledgerEmpSelect').innerHTML = opts;
+    if (document.getElementById('slipEmpSelect')) document.getElementById('slipEmpSelect').innerHTML = opts;
+  }
+
+  function renderLeaveLedger() {
+    const empId = document.getElementById('ledgerEmpSelect').value;
+    const m = document.getElementById('globalMonth').value;
+    const [y, mm] = m.split('-').map(Number);
+    const lastDay = new Date(y, mm, 0).getDate();
+    const tb = document.getElementById('ledgerTableBody');
+    if (!tb || !empId) return;
+
+    let rows = [];
+    for (let d = 1; d <= lastDay; d++) {
+      const ds = `${m}-${String(d).padStart(2,'0')}`;
+      const dObj = new Date(ds + 'T00:00:00');
+      let status = 'Present', ci = '-', co = '-';
+      const shiftRec = db.processedShifts.find(s => s.id === empId && s.dutyDate === ds);
+      const manualSt = db.manualStatus[`${empId}_${ds}`] || '';
+
+      if (dObj.getDay() === 0) status = '☀️ Sunday';
+      else if ((db.holidays || []).includes(ds)) status = '🎉 Holiday';
+      else if (manualSt) status = manualSt;
+      else if (shiftRec) { ci = shiftRec.checkIn; co = shiftRec.checkOut; status = shiftRec.hasIn && shiftRec.hasOut ? '✅ Present' : '⚠️ Missing'; }
+      else status = '❌ Absent';
+
+      rows.push(`<tr><td><strong>${ds}</strong></td><td>${dObj.toLocaleDateString('en-US',{weekday:'short'})}</td><td>${status}</td><td>${ci}</td><td>${co}</td></tr>`);
+    }
+    tb.innerHTML = rows.join('');
+  }
+
+  function renderSundayDutyTable() {
+    const m = document.getElementById('globalMonth').value;
+    const statusFilter = document.getElementById('sundayStatusFilter').value;
+    const tb = document.getElementById('sundayDutyBody');
+    if (!tb) return;
+
+    const sundayShifts = db.processedShifts.filter(s => {
+      const emp = db.employees[s.id];
+      if (!emp || (emp.status || 'Active') !== 'Active') return false;
+      if (s.month !== m) return false;
+      return new Date(s.dutyDate + 'T00:00:00').getDay() === 0 && (s.hasIn || s.hasOut);
+    });
+
+    tb.innerHTML = sundayShifts.map(s => {
+      const otKey = `${s.id}_${s.dutyDate}`;
+      const status = db.sundayOT[otKey] || 'PENDING';
+      if (statusFilter !== 'ALL' && status !== statusFilter) return '';
+      const emp = db.employees[s.id] || { salary: 24000 };
+      const otAmount = Math.round(emp.salary / 30);
+      return `
+        <tr>
+          <td>${s.id}</td><td><strong>${emp.name}</strong></td><td>${emp.position}</td><td>${s.dutyDate}</td><td>${s.checkIn}</td><td>${s.checkOut}</td>
+          <td style="color:var(--success); font-weight:700;">Rs. ${otAmount.toLocaleString()}</td>
+          <td><span class="badge ${status === 'CONFIRMED' ? 'b-day' : 'b-miss'}">${status}</span></td>
+          <td>${status === 'PENDING' ? `<button class="btn-success" style="padding:4px 8px;" onclick="db.sundayOT['${otKey}']='CONFIRMED';saveDB();renderSundayDutyTable();">Confirm</button>` : `<button class="btn-danger" style="padding:4px 8px;" onclick="db.sundayOT['${otKey}']='PENDING';saveDB();renderSundayDutyTable();">Revert</button>`}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function openHolidayModal() { renderHolidayTable(); document.getElementById('holidayModal').style.display = 'flex'; }
+  function renderHolidayTable() {
+    const tb = document.getElementById('holidayTableBody');
+    if (!tb) return;
+    tb.innerHTML = (db.holidays || []).map((h, i) => `<tr><td><strong>${h}</strong></td><td><button class="btn-danger" style="padding:3px 6px;" onclick="db.holidays.splice(${i},1);saveDB();renderHolidayTable();refreshDashboard();">Delete</button></td></tr>`).join('');
+  }
+  function addHoliday() {
+    const val = document.getElementById('newHolidayDate').value;
+    if (!val) return;
+    if (!db.holidays) db.holidays = [];
+    if (!db.holidays.includes(val)) { db.holidays.push(val); db.holidays.sort(); saveDB(); renderHolidayTable(); refreshDashboard(); alert('Added!'); }
+  }
+
+  function showActiveWorkersModal() {
+    const filterDate = document.getElementById('filterDate').value;
+    document.getElementById('activeModalDate').textContent = filterDate;
+    const presentIDs = getPresentIDsForDate(filterDate);
+    document.getElementById('activeWorkersModalBody').innerHTML = getActiveEmployees().filter(e => presentIDs.has(e.id)).map(e => `<tr><td>${e.id}</td><td><strong>${e.name}</strong></td><td>${e.position}</td><td>${getEffectiveShiftForDate(e.id, filterDate)}</td><td><span class="badge b-day">Present</span></td></tr>`).join('');
+    document.getElementById('activeWorkersModal').style.display = 'flex';
+  }
+
+  function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+  function exportSalarySheet(cat) { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById(cat === 'Senior' ? 'seniorSalaryBody' : 'juniorSalaryBody').parentElement, { sheet: `${cat}_Salary` }), `${cat}_Salary.xlsx`); }
+  function exportSundayDutyExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('sundayDutyBody').parentElement, { sheet: "Sunday_OT" }), "Sunday_OT.xlsx"); }
+  function exportLeaveLedgerExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('ledgerTableBody').parentElement, { sheet: "Leave_Ledger" }), "Leave_Ledger.xlsx"); }
+  function resetSystemData() { if (confirm('⚠️ WARNING: Kya aap saara data reset karna chahte hain? Ye action wapas nahi ho sakta!')) { localStorage.removeItem('factory_erp_pro_v49'); localStorage.removeItem('factory_erp_pro_v48'); location.reload(); } }
+
+  loadCloudDB();
+  refreshDashboard();
+</script>
+</body>
+</html>
