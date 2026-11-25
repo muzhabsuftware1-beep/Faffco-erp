@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Factory HR & Payroll ERP - Pro Suite v52 (Absent Since Date Fix)</title>
+  <title>Factory HR & Payroll ERP - Pro Suite v54 (Exact Joining & Leaving Leave Quota Rules)</title>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -75,7 +75,7 @@
       display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
       background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;
     }
-    .modal-content { background: white; padding: 24px; border-radius: 10px; width: 1020px; max-width: 95%; max-height: 85vh; overflow-y: auto; border: 1px solid var(--border); }
+    .modal-content { background: white; padding: 24px; border-radius: 10px; width: 1040px; max-width: 96%; max-height: 88vh; overflow-y: auto; border: 1px solid var(--border); }
     .zk-card { border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 16px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
     .zk-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; margin-top: 8px; }
     .zk-cell { border: 1px solid var(--border); padding: 5px; font-size: 11px; text-align: center; border-radius: 4px; background: #fafafa; }
@@ -84,12 +84,15 @@
     .zk-cell.miss { background: #fee2e2; color: #dc2626; font-weight: 700; }
     .zk-cell.ok-cell { background: #dcfce7; color: #16a34a; font-weight: 700; }
     .summary-tag { font-size: 11px; background: #f1f5f9; padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border); font-weight: 600; color: #334155; }
+    .emp-chip-list { display: flex; flex-wrap: wrap; gap: 6px; max-height: 130px; overflow-y: auto; border: 1px solid var(--border); padding: 8px; border-radius: 6px; background: #f8fafc; }
+    .emp-chip { display: inline-flex; align-items: center; gap: 4px; background: white; border: 1px solid var(--border); padding: 4px 8px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+    .emp-chip.selected { background: #e0e7ff; border-color: #2563eb; font-weight: 700; color: #1e3a8a; }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>🏭 Factory HR & Payroll ERP - Pro Suite v52 <span style="font-size:12px; background:rgba(255,255,255,0.2); padding:3px 8px; border-radius:6px; margin-left:6px;">Absent Since Date Fixed</span></h1>
+  <h1>🏭 Factory HR & Payroll ERP - Pro Suite v54 <span style="font-size:12px; background:rgba(255,255,255,0.2); padding:3px 8px; border-radius:6px; margin-left:6px;">Exact Joining & Leaving Quota Rules</span></h1>
   <div class="nav-tabs">
     <button class="active" onclick="switchTab('dashTab', this)">1. Dashboard</button>
     <button onclick="switchTab('attTab', this)">2. Attendance Logs</button>
@@ -109,9 +112,9 @@
   <div id="dashTab" class="tab-pane active">
     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 18px;">
       <div class="stat-box" style="border-left-color: var(--primary);">
-        <h3>Total Gross Payroll</h3>
+        <h3>Total Gross / Earned</h3>
         <div class="val" id="dashTotalGross" style="color: var(--primary);">Rs. 0</div>
-        <small>Standard 30-Day Basis</small>
+        <small>Active + Left Pro-Rata Basis</small>
       </div>
       <div class="stat-box" style="border-left-color: var(--warning);">
         <h3>Total Advance Given</h3>
@@ -151,7 +154,7 @@
       <div class="stat-box" onclick="showLeavesSummaryModal()" style="border-color:var(--warning);">
         <h3>Leaves Summary</h3>
         <div class="val" id="statMonthLeave" style="color:var(--warning);">0</div>
-        <small>Taken vs Remaining Balance</small>
+        <small>Taken vs Next-Month Carry</small>
       </div>
       <div class="stat-box" onclick="showShiftWorkersModal('DAY')" style="border-color:var(--day);">
         <h3>Day Shift (Active)</h3>
@@ -166,17 +169,18 @@
     </div>
 
     <div class="card">
-      <h3>📊 Smart Actions, Shift Management & Reports</h3>
+      <h3>📊 Smart Actions, Left Settlement & Reports</h3>
       <div class="controls">
+        <button class="btn-danger" style="background:#b91c1c;" onclick="openLeftSettlementModal()">🚪 Left Worker Settlement</button>
         <button class="btn-primary" style="background:#1d4ed8;" onclick="openShiftChangeModal()">🔄 Shift Change / Auto-Update</button>
-        <button class="btn-primary" style="background:#7c3aed;" onclick="openSmartManualLogModal()">📥 Smart ZKTeco Manual Log Generator</button>
-        <button class="btn-warning" onclick="showLeavesSummaryModal()">📊 Leaves Summary (Taken vs Remaining)</button>
+        <button class="btn-primary" style="background:#7c3aed;" onclick="openSmartManualLogModal()">📥 Smart ZKTeco Manual Log (Multi-Select)</button>
+        <button class="btn-warning" onclick="showLeavesSummaryModal()">📊 Leaves Summary (Next Month Carry)</button>
         <button class="btn-success" onclick="openSingleAdvanceModal()">💰 Add Advance</button>
         <button class="btn-primary" style="background:#d97706;" onclick="openAdvanceLedgerModal()">📋 View Advance Ledger</button>
         <button class="btn-primary" onclick="openLeaveLedgerModal()">📅 Date-wise Leave Ledger</button>
         <button class="btn-warning" onclick="openHolidayModal()">➕ Manage Holidays</button>
         <button class="btn-success" style="background:#25d366;" onclick="openWhatsAppAlertModal()">💬 WhatsApp Daily Report</button>
-        <button class="btn-primary" style="background:#0d9488;" onclick="openSalarySlipModal()">🖨️ Generate Salary Slip (PDF)</button>
+        <button class="btn-primary" onclick="openSalarySlipModal()">🖨️ Generate Salary Slip (PDF)</button>
       </div>
     </div>
   </div>
@@ -269,13 +273,13 @@
   <div id="seniorTab" class="tab-pane">
     <div class="card">
       <div class="controls">
-        <h3 style="margin:0;">👔 Senior Staff Salary Sheet (<span class="lblMonth"></span> — Standard 30 Days)</h3>
+        <h3 style="margin:0;">👔 Senior Staff Salary Sheet (<span class="lblMonth"></span> — Active + Left Pro-Rata)</h3>
         <button class="btn-success" onclick="exportSalarySheet('Senior')">Export Senior Salary (.xlsx)</button>
       </div>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>ID</th><th>Name</th><th>Position</th><th>Basic</th><th>Salary Days</th><th>Present</th><th>Offs</th><th>Holidays</th><th>Medical</th><th>Opening</th><th>Allowed</th><th>Current Abs</th><th>Total Abs (Cut)</th><th>Advance</th><th>Net Payable</th></tr>
+            <tr><th>ID</th><th>Name</th><th>Position</th><th>Basic</th><th>Payable Days</th><th>Present</th><th>Valid Offs</th><th>Valid Hols</th><th>Medical</th><th>Opening</th><th>Allowed (Tier)</th><th>Next Mo Carry</th><th>Current Abs</th><th>Total Abs (Cut)</th><th>Advance</th><th>Net Payable</th></tr>
           </thead>
           <tbody id="seniorSalaryBody"></tbody>
         </table>
@@ -287,13 +291,13 @@
   <div id="juniorTab" class="tab-pane">
     <div class="card">
       <div class="controls">
-        <h3 style="margin:0;">👷 Junior Staff Salary Sheet (<span class="lblMonth"></span> — Standard 30 Days)</h3>
+        <h3 style="margin:0;">👷 Junior Staff Salary Sheet (<span class="lblMonth"></span> — Active + Left Pro-Rata)</h3>
         <button class="btn-success" onclick="exportSalarySheet('Junior')">Export Junior Salary (.xlsx)</button>
       </div>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>ID</th><th>Name</th><th>Position</th><th>Basic</th><th>Salary Days</th><th>Present</th><th>Offs</th><th>Holidays</th><th>Medical</th><th>Opening</th><th>Allowed</th><th>Current Abs</th><th>Total Abs (Cut)</th><th>Advance</th><th>Net Payable</th></tr>
+            <tr><th>ID</th><th>Name</th><th>Position</th><th>Basic</th><th>Payable Days</th><th>Present</th><th>Valid Offs</th><th>Valid Hols</th><th>Medical</th><th>Opening</th><th>Allowed (Tier)</th><th>Next Mo Carry</th><th>Current Abs</th><th>Total Abs (Cut)</th><th>Advance</th><th>Net Payable</th></tr>
           </thead>
           <tbody id="juniorSalaryBody"></tbody>
         </table>
@@ -374,6 +378,28 @@
 
 </div>
 
+<!-- LEFT WORKER FULL & FINAL SETTLEMENT MODAL -->
+<div id="leftSettlementModal" class="modal">
+  <div class="modal-content" style="width: 820px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="margin:0; color:#b91c1c;">🚪 Left Worker Full & Final Settlement</h3>
+      <div style="display:flex; gap:8px;">
+        <button class="btn-danger" style="background:#dc2626;" onclick="exportSettlementPDF()">📥 Download Settlement PDF</button>
+        <button onclick="closeModal('leftSettlementModal')" class="btn-danger" style="padding:4px 8px;">X</button>
+      </div>
+    </div>
+    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:12px; background:#fef2f2; padding:12px; border-radius:8px; border:1px solid #fecaca; margin-bottom:14px;">
+      <label>Select Worker (Left or Leaving Now):
+        <select id="settleEmpSelect" onchange="syncSettlementLeftDate(); renderLeftSettlementDetails();" style="width:100%; margin-top:4px; font-weight:700;"></select>
+      </label>
+      <label>Left / Last Working Date:
+        <input type="date" id="settleLeftDate" onchange="updateWorkerLeftDateFromModal()" style="width:100%; margin-top:4px; font-weight:700;" />
+      </label>
+    </div>
+    <div id="settlementCardBody" style="background:white; padding:20px; border:1px solid var(--border); border-radius:8px;"></div>
+  </div>
+</div>
+
 <!-- SHIFT CHANGE / AUTO-HANDLE MODAL -->
 <div id="shiftChangeModal" class="modal">
   <div class="modal-content" style="width: 780px;">
@@ -416,19 +442,26 @@
   </div>
 </div>
 
-<!-- SMART ZKTECO MANUAL LOG GENERATOR MODAL -->
+<!-- SMART ZKTECO MANUAL LOG GENERATOR MODAL (SEARCH + MULTI-SELECT) -->
 <div id="smartManualLogModal" class="modal">
-  <div class="modal-content" style="width: 980px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-      <h3 style="margin:0; color:#7c3aed;">📥 Smart ZKTeco Manual Log Generator (Multi-Employee & Auto-Fix)</h3>
+  <div class="modal-content" style="width: 1020px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <h3 style="margin:0; color:#7c3aed;">📥 Smart ZKTeco Manual Log Generator (Multi-Employee Search & Select)</h3>
       <button onclick="closeModal('smartManualLogModal')" class="btn-danger" style="padding:4px 8px;">X</button>
     </div>
+
+    <!-- MULTI-EMPLOYEE SEARCH & CHIP SELECTOR -->
+    <div style="background:#f1f5f9; padding:12px; border-radius:8px; border:1px solid var(--border); margin-bottom:12px;">
+      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px;">
+        <input type="text" id="smartEmpSearchInput" placeholder="🔍 Search Employee Name or ID (e.g. Atif, 12, Bilal)..." oninput="renderSmartEmpSelectorList()" style="flex:1; min-width:220px;" />
+        <button class="btn-primary" style="padding:6px 10px;" onclick="selectAllSmartEmps(true)">Select All</button>
+        <button class="btn-warning" style="padding:6px 10px;" onclick="selectAllSmartEmps(false)">Clear All (Pick Specific 5)</button>
+        <span id="smartSelectedCountBadge" class="badge b-day" style="font-size:12px;">All Selected</span>
+      </div>
+      <div id="smartEmpChipContainer" class="emp-chip-list"></div>
+    </div>
+
     <div class="controls" style="flex-wrap:wrap; gap:10px;">
-      <label>Select Employee(s):
-        <select id="smartLogEmpSelect" onchange="previewSmartManualLogs()" style="font-weight:700; min-width:200px;">
-          <option value="ALL">All Employees</option>
-        </select>
-      </label>
       <label>Filter Report Type:
         <select id="smartLogCategory" onchange="previewSmartManualLogs()" style="font-weight:700;">
           <option value="LATE_AND_EARLY">1. Late Check-In (>06:30) & Early Out (<17:30)</option>
@@ -446,7 +479,7 @@
       </label>
       <button class="btn-success" onclick="downloadSmartManualLogExcel()">📥 Download ZKTeco Import File (.xls)</button>
     </div>
-    <div class="table-wrap" style="margin-top:10px; max-height:420px;">
+    <div class="table-wrap" style="margin-top:10px; max-height:360px;">
       <table>
         <thead>
           <tr><th><input type="checkbox" id="chkAllSmartLogs" checked onchange="toggleAllSmartCheckboxes(this.checked)" /></th><th>ID</th><th>Name</th><th>Shift</th><th>Date</th><th>Issue Detected</th><th>Actual Punch</th><th>Generated ZKTeco Log</th><th>Punch State</th></tr>
@@ -478,9 +511,9 @@
 
 <!-- LEAVES SUMMARY MODAL -->
 <div id="leavesSummaryModal" class="modal">
-  <div class="modal-content" style="width: 1040px;" id="leavesSummaryPrintArea">
+  <div class="modal-content" style="width: 1080px;" id="leavesSummaryPrintArea">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-      <h3 style="margin:0; color:#d97706;">📊 Complete Leaves Summary (<span class="lblMonth"></span>)</h3>
+      <h3 style="margin:0; color:#d97706;">📊 Complete Leaves Summary & Next-Month Carry Forward (<span class="lblMonth"></span>)</h3>
       <div style="display:flex; gap:8px;">
         <button class="btn-danger" style="background:#dc2626;" onclick="exportLeavesSummaryPDF()">📥 Download PDF</button>
         <button class="btn-success" onclick="exportLeavesSummaryExcel()">📥 Export Excel</button>
@@ -493,7 +526,7 @@
     <div class="table-wrap" style="margin-top:10px;">
       <table>
         <thead>
-          <tr><th>ID</th><th>Name</th><th>Position</th><th>Present</th><th>Weekly Offs</th><th>Holidays</th><th>Opening</th><th>Allowed</th><th>Quota</th><th>Taken / Abs</th><th>Balance</th><th>Unpaid Cut</th></tr>
+          <tr><th>ID</th><th>Name</th><th>Hired Date</th><th>Present</th><th>Valid Offs</th><th>Valid Hols</th><th>Opening</th><th>Allowed (Tier)</th><th>Next Mo Transfer</th><th>Taken / Abs</th><th>Unpaid Cut</th></tr>
         </thead>
         <tbody id="leavesSummaryBody"></tbody>
       </table>
@@ -677,8 +710,9 @@
   let logSortField = 'id';
   let logSortAsc = true;
   let smartManualLogCandidates = [];
+  let selectedSmartEmpIds = new Set();
 
-  let savedData = localStorage.getItem('factory_erp_pro_v52') || localStorage.getItem('factory_erp_pro_v51') || localStorage.getItem('factory_erp_pro_v50') || localStorage.getItem('factory_erp_pro_v49');
+  let savedData = localStorage.getItem('factory_erp_pro_v54') || localStorage.getItem('factory_erp_pro_v53') || localStorage.getItem('factory_erp_pro_v52') || localStorage.getItem('factory_erp_pro_v51');
   let db = savedData ? JSON.parse(savedData) : {
     employees: {
       "1": {id:"1", name:"Atif Javed", position:"Packer", shift:"Day Shift", hiredDate:"2026-09-04", leftDate:"", category:"Junior", salary:24000, openingPending:4, status:"Active"},
@@ -762,7 +796,7 @@
   async function saveDB() {
     try {
       db.rawPunches = rawPunchesMem;
-      localStorage.setItem('factory_erp_pro_v52', JSON.stringify(db));
+      localStorage.setItem('factory_erp_pro_v54', JSON.stringify(db));
       if (supabaseClient) {
         await supabaseClient.from('factory_state').upsert({ id: 'main_db', data: db, updated_at: new Date() });
       }
@@ -919,7 +953,7 @@
             category: String(r['Category'] || existing.category || 'Junior').toLowerCase().includes('sen') ? 'Senior' : 'Junior',
             salary: Number(r['Salry'] || r['Basic Salary'] || r['Salary'] || existing.salary || 24000),
             openingPending: Number(r['Pnding Leve'] || r['Pending Leaves'] || existing.openingPending || 0),
-            status: existing.status || 'Active'
+            status: leftDate ? 'Left' : (existing.status || 'Active')
           };
         });
         saveDB(); refreshDashboard();
@@ -1176,6 +1210,14 @@
     return Object.values(db.employees).filter(e => (e.status || 'Active') === 'Active');
   }
 
+  function getPayrollEmployeesForMonth(monthStr) {
+    return Object.values(db.employees).filter(e => {
+      if ((e.status || 'Active') === 'Active') return true;
+      if (e.leftDate && String(e.leftDate).slice(0, 7) === monthStr) return true;
+      return false;
+    });
+  }
+
   function getPresentIDsForDate(filterDate) {
     const m = String(filterDate || '').slice(0, 7);
     const monthShifts = db.processedShifts.filter(s => s.month === m);
@@ -1183,7 +1225,8 @@
 
     monthShifts.forEach(s => {
       const emp = db.employees[s.id];
-      if (!emp || (emp.status || 'Active') !== 'Active') return;
+      if (!emp) return;
+      if (emp.leftDate && emp.leftDate < filterDate) return;
       if (s.dutyDate === filterDate && (s.hasIn || s.hasOut || db.manualStatus[`${s.id}_${s.dutyDate}`] === 'Present')) {
         presentIDs.add(s.id);
       }
@@ -1211,6 +1254,7 @@
 
     const absentList = activeEmps.filter(e => {
       if (e.hiredDate && e.hiredDate > filterDate) return false;
+      if (e.leftDate && e.leftDate < filterDate) return false;
       const isSunday = new Date(filterDate + 'T00:00:00').getDay() === 0;
       if (isSunday || (db.holidays || []).includes(filterDate)) return false;
       return !presentIDs.has(e.id);
@@ -1218,27 +1262,21 @@
     document.getElementById('statTodayAbsent').textContent = absentList.length;
 
     let totalMonthLeavesCount = 0;
-    activeEmps.forEach(emp => {
+    const payrollEmps = getPayrollEmployeesForMonth(m);
+    payrollEmps.forEach(emp => {
       const stats = getEmpStats(emp.id, m);
       if (stats.leavesUsed > 0 || stats.totalAbsents > 0) totalMonthLeavesCount++;
     });
     document.getElementById('statMonthLeave').textContent = totalMonthLeavesCount;
 
     let totalGross = 0, totalAdv = 0, totalDeductions = 0, netPayableSum = 0;
-    activeEmps.forEach(emp => {
+    payrollEmps.forEach(emp => {
       const stats = getEmpStats(emp.id, m);
-      const perDay = emp.salary / 30;
       const adv = getTotalAdvanceForMonth(emp.id, m);
-      const cut = stats.totalAbsents * perDay;
-      let net = 0;
-      if (stats.presentDays > 0) {
-        net = Math.max(0, Math.round(emp.salary - cut - adv));
-      }
-
-      totalGross += Number(emp.salary) || 0;
+      totalGross += stats.earnedBaseSalary;
       totalAdv += adv;
-      totalDeductions += Math.round(cut);
-      netPayableSum += net;
+      totalDeductions += stats.deductionAmount;
+      netPayableSum += stats.netPayable;
     });
 
     document.getElementById('dashTotalGross').textContent = `Rs. ${totalGross.toLocaleString()}`;
@@ -1255,19 +1293,25 @@
     populateEmployeeDropdowns();
   }
 
+  // --- EXACT JOINING & LEAVING TIER LEAVE QUOTA ENGINE ---
   function getEmpStats(empId, monthStr) {
     const emp = db.employees[empId] || {};
     const hireDate = emp.hiredDate || `${monthStr}-01`;
-    let effectiveStart = hireDate > `${monthStr}-01` ? hireDate : `${monthStr}-01`;
+    const isJoinedThisMonth = String(hireDate).slice(0, 7) === monthStr;
+    let effectiveStart = isJoinedThisMonth ? hireDate : `${monthStr}-01`;
 
     const [y, mm] = monthStr.split('-').map(Number);
     const actualDaysInMonth = new Date(y, mm, 0).getDate();
     let monthEndStr = `${monthStr}-${String(actualDaysInMonth).padStart(2,'0')}`;
 
     let leftDate = emp.leftDate || '';
-    if (leftDate && String(leftDate).slice(0, 7) === monthStr) {
-      if (leftDate < monthEndStr) monthEndStr = leftDate;
+    const isLeftThisMonth = leftDate && String(leftDate).slice(0, 7) === monthStr;
+    if (isLeftThisMonth && leftDate < monthEndStr) {
+      monthEndStr = leftDate;
     }
+
+    const startD = Number(String(effectiveStart).slice(8, 10));
+    const endD = Number(String(monthEndStr).slice(8, 10));
 
     const shifts = db.processedShifts.filter(s => s.id === empId && s.month === monthStr && s.dutyDate >= effectiveStart && s.dutyDate <= monthEndStr);
     const uniquePresentWorkingDays = new Set();
@@ -1283,103 +1327,276 @@
     });
     let presentDays = uniquePresentWorkingDays.size;
 
-    const startD = Number(String(effectiveStart).slice(8, 10));
-    const endD = Number(String(monthEndStr).slice(8, 10));
-    
-    let actualWorkingDays = 0, weeklyOffs = 0, holidaysCount = 0, medicalLeaves = 0, explicitAbsents = 0;
-    
-    for (let d = 1; d <= actualDaysInMonth; d++) {
-      const ds = `${monthStr}-${String(d).padStart(2,'0')}`;
-      const dObj = new Date(ds + 'T00:00:00');
-      if (dObj.getDay() === 0) weeklyOffs++;
-      else if ((db.holidays || []).includes(ds)) holidaysCount++;
-      else actualWorkingDays++;
-    }
+    let validWorkingDays = 0, validWeeklyOffs = 0, validHolidays = 0, medicalLeaves = 0, explicitAbsents = 0;
 
     for (let d = startD; d <= endD; d++) {
       const ds = `${monthStr}-${String(d).padStart(2,'0')}`;
       const dObj = new Date(ds + 'T00:00:00');
-      if (dObj.getDay() !== 0 && !(db.holidays || []).includes(ds)) {
+      if (dObj.getDay() === 0) {
+        validWeeklyOffs++;
+      } else if ((db.holidays || []).includes(ds)) {
+        validHolidays++;
+      } else {
+        validWorkingDays++;
         const st = db.manualStatus[`${empId}_${ds}`];
         if (st === 'Medical Leave') medicalLeaves++;
         else if (st === 'Absent') explicitAbsents++;
       }
     }
 
-    const standardSalaryDays = 30;
-    presentDays = Math.min(presentDays, actualWorkingDays);
-    
-    let currentAbsents = 0, leavesUsed = 0, remainingBalance = 0, totalAbsents = 0;
+    presentDays = Math.min(presentDays, validWorkingDays);
+
     let openingPending = Number(emp.openingPending) || 0;
-    let currentMonthAllowedLeaves = 2;
+    let allowedLeavesThisMonth = 2; // Default for full month
+    let nextMonthCarryLeaves = 0;
 
-    if (presentDays === 0 && actualWorkingDays === 0) {
-      currentAbsents = 0;
-      totalAbsents = 0;
-    } else {
-      let preHireWorkingDays = 0;
-      for (let d = 1; d < startD; d++) {
-        const ds = `${monthStr}-${String(d).padStart(2,'0')}`;
-        const dObj = new Date(ds + 'T00:00:00');
-        if (dObj.getDay() !== 0 && !(db.holidays || []).includes(ds)) preHireWorkingDays++;
+    // TIER LOGIC FOR JOINING:
+    // 1-10 -> 2 leaves
+    // 10-20 -> 1 leave (Attiq joined on 10th -> exactly 2 or if 11th then 1, let's follow day range precisely)
+    // 20-30 -> 0 leaves
+    if (isJoinedThisMonth) {
+      const joinDay = Number(String(hireDate).slice(8, 10));
+      if (joinDay >= 1 && joinDay <= 10) {
+        allowedLeavesThisMonth = 2;
+      } else if (joinDay > 10 && joinDay <= 20) {
+        allowedLeavesThisMonth = 1;
+      } else {
+        allowedLeavesThisMonth = 0;
       }
-
-      const activeWorkingDays = Math.max(0, actualWorkingDays - preHireWorkingDays);
-      const rawAbsent = Math.max(0, activeWorkingDays - presentDays);
-      currentAbsents = explicitAbsents + Math.max(0, rawAbsent - medicalLeaves);
-      
-      const hireYearMonth = String(hireDate).slice(0, 7);
-      if (hireYearMonth === monthStr) {
-        const hireDay = Number(String(hireDate).slice(8, 10));
-        if (hireDay >= 1 && hireDay <= 10) currentMonthAllowedLeaves = 2;
-        else if (hireDay >= 11 && hireDay <= 20) currentMonthAllowedLeaves = 1;
-        else currentMonthAllowedLeaves = 0;
+    } else if (isLeftThisMonth) {
+      // TIER LOGIC FOR LEAVING (ULTA):
+      // 1-10 -> 0 leaves
+      // 10-20 -> 1 leave
+      // 20-30 -> 2 leaves
+      const leftDay = Number(String(leftDate).slice(8, 10));
+      if (leftDay >= 1 && leftDay <= 10) {
+        allowedLeavesThisMonth = 0;
+      } else if (leftDay > 10 && leftDay <= 20) {
+        allowedLeavesThisMonth = 1;
+      } else {
+        allowedLeavesThisMonth = 2;
       }
-
-      let totalQuota = openingPending + currentMonthAllowedLeaves;
-      leavesUsed = Math.min(currentAbsents, totalQuota);
-      remainingBalance = Math.max(0, totalQuota - leavesUsed);
-      totalAbsents = Math.min(30, Math.max(0, currentAbsents - leavesUsed));
     }
 
-    return { 
-      workingDays: standardSalaryDays, 
-      presentDays, 
-      weeklyOffs, 
-      holidaysCount, 
-      medicalLeaves, 
-      openingPending, 
-      currentMonthAllowedLeaves, 
-      totalQuota: openingPending + currentMonthAllowedLeaves, 
-      leavesUsed, 
-      remainingBalance, 
-      currentAbsents, 
-      totalAbsents 
+    const rawAbsent = Math.max(0, validWorkingDays - presentDays);
+    const currentAbsents = explicitAbsents + Math.max(0, rawAbsent - medicalLeaves);
+
+    const usableQuotaThisMonth = openingPending + allowedLeavesThisMonth;
+    const leavesUsed = Math.min(currentAbsents, usableQuotaThisMonth);
+    const unusedUsableQuota = Math.max(0, usableQuotaThisMonth - leavesUsed);
+    
+    // Carry forward unused quota to next month for active workers
+    const totalNextMonthPending = isLeftThisMonth ? 0 : unusedUsableQuota;
+    const totalAbsents = Math.max(0, currentAbsents - leavesUsed);
+
+    const perDay = (Number(emp.salary) || 0) / 30;
+    const adv = getTotalAdvanceForMonth(empId, monthStr);
+    let payableCalendarDays = 30;
+    let earnedBaseSalary = Number(emp.salary) || 0;
+
+    if (isJoinedThisMonth || isLeftThisMonth) {
+      const spanDays = Math.max(0, endD - startD + 1);
+      payableCalendarDays = Math.min(30, spanDays);
+      earnedBaseSalary = Math.round(payableCalendarDays * perDay);
+    }
+
+    const deductionAmount = Math.round(totalAbsents * perDay);
+    let netPayable = 0;
+
+    if (presentDays === 0) {
+      earnedBaseSalary = 0;
+      netPayable = 0;
+    } else {
+      netPayable = Math.max(0, Math.round(earnedBaseSalary - deductionAmount - adv));
+    }
+
+    return {
+      isJoinedThisMonth,
+      isLeftThisMonth,
+      effectiveStart,
+      monthEndStr,
+      payableCalendarDays,
+      presentDays,
+      weeklyOffs: validWeeklyOffs,
+      holidaysCount: validHolidays,
+      medicalLeaves,
+      openingPending,
+      currentMonthAllowedLeaves: allowedLeavesThisMonth,
+      nextMonthCarryLeaves: totalNextMonthPending,
+      leavesUsed,
+      currentAbsents,
+      totalAbsents,
+      earnedBaseSalary,
+      deductionAmount,
+      advanceAmount: adv,
+      netPayable
     };
   }
 
+  function openLeftSettlementModal() {
+    const sel = document.getElementById('settleEmpSelect');
+    const allEmps = Object.values(db.employees).sort((a, b) => Number(a.id) - Number(b.id));
+    const sorted = [
+      ...allEmps.filter(e => (e.status || 'Active') === 'Left' || e.leftDate),
+      ...allEmps.filter(e => (e.status || 'Active') === 'Active' && !e.leftDate)
+    ];
+
+    sel.innerHTML = sorted.map(e => `<option value="${e.id}">${e.id} - ${e.name} ${(e.status==='Left'||e.leftDate) ? `[LEFT: ${e.leftDate||'Yes'}]` : '(Active)'}</option>`).join('');
+    syncSettlementLeftDate();
+    renderLeftSettlementDetails();
+    document.getElementById('leftSettlementModal').style.display = 'flex';
+  }
+
+  function syncSettlementLeftDate() {
+    const empId = document.getElementById('settleEmpSelect').value;
+    const emp = db.employees[empId] || {};
+    document.getElementById('settleLeftDate').value = emp.leftDate || document.getElementById('filterDate').value || new Date().toISOString().slice(0, 10);
+  }
+
+  function updateWorkerLeftDateFromModal() {
+    const empId = document.getElementById('settleEmpSelect').value;
+    const newLeftDate = document.getElementById('settleLeftDate').value;
+    if (db.employees[empId]) {
+      db.employees[empId].leftDate = newLeftDate;
+      db.employees[empId].status = newLeftDate ? 'Left' : 'Active';
+      saveDB();
+      refreshDashboard();
+      renderLeftSettlementDetails();
+    }
+  }
+
+  function renderLeftSettlementDetails() {
+    const empId = document.getElementById('settleEmpSelect').value;
+    const leftDt = document.getElementById('settleLeftDate').value;
+    const container = document.getElementById('settlementCardBody');
+    if (!container || !empId) return;
+
+    const emp = db.employees[empId] || {};
+    const m = leftDt ? leftDt.slice(0, 7) : document.getElementById('globalMonth').value;
+    const stats = getEmpStats(empId, m);
+    const perDay = Math.round((Number(emp.salary) || 0) / 30);
+
+    container.innerHTML = `
+      <div style="border-bottom: 2px solid #b91c1c; padding-bottom: 12px; margin-bottom: 16px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <h2 style="margin:0; color:#b91c1c;">FAFFCO PET INDUSTRIES — FULL & FINAL SETTLEMENT</h2>
+          <small style="color:var(--muted);">Settlement Month: ${m} | Status: <strong>${emp.status || 'Left'}</strong></small>
+        </div>
+        <div style="text-align:right;">
+          <strong>Employee ID: ${emp.id}</strong><br/>
+          <span class="badge b-miss">Left Date: ${leftDt || 'Not Set'}</span>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; font-size:13px; background:#f8fafc; padding:10px; border-radius:6px;">
+        <div><strong>Worker Name:</strong> ${emp.name}</div>
+        <div><strong>Position:</strong> ${emp.position}</div>
+        <div><strong>Hired Date:</strong> ${emp.hiredDate || '-'}</div>
+        <div><strong>Basic Monthly Salary:</strong> Rs. ${Number(emp.salary).toLocaleString()} (Per Day: Rs. ${perDay})</div>
+      </div>
+
+      <table style="width:100%; border-collapse:collapse; margin-bottom:16px; font-size:13px;">
+        <tr style="background:#f8fafc;"><th style="border:1px solid var(--border); padding:8px;">Settlement Component</th><th style="border:1px solid var(--border); padding:8px; text-align:right;">Details / Amount</th></tr>
+        <tr><td style="border:1px solid var(--border); padding:8px;">Active Period in Month</td><td style="border:1px solid var(--border); padding:8px; text-align:right;">${stats.effectiveStart} to ${stats.monthEndStr}</td></tr>
+        <tr><td style="border:1px solid var(--border); padding:8px;">Present Duty Days</td><td style="border:1px solid var(--border); padding:8px; text-align:right; color:var(--success); font-weight:700;">${stats.presentDays} Days</td></tr>
+        <tr><td style="border:1px solid var(--border); padding:8px;">Valid Sundays / Holidays in Period</td><td style="border:1px solid var(--border); padding:8px; text-align:right;">${stats.weeklyOffs + stats.holidaysCount} Days</td></tr>
+        <tr><td style="border:1px solid var(--border); padding:8px;">Total Payable Calendar Days (${stats.payableCalendarDays} Days × Rs. ${perDay})</td><td style="border:1px solid var(--border); padding:8px; text-align:right; font-weight:700;">Rs. ${stats.earnedBaseSalary.toLocaleString()}</td></tr>
+        <tr><td style="border:1px solid var(--border); padding:8px;">Allowed Quota (Left Tier)</td><td style="border:1px solid var(--border); padding:8px; text-align:right;">${stats.currentMonthAllowedLeaves} Days</td></tr>
+        <tr><td style="border:1px solid var(--border); padding:8px;">Unpaid Absents Deduction (${stats.totalAbsents} Days)</td><td style="border:1px solid var(--border); padding:8px; text-align:right; color:var(--danger); font-weight:700;">- Rs. ${stats.deductionAmount.toLocaleString()}</td></tr>
+        <tr><td style="border:1px solid var(--border); padding:8px;">Advance / Loan Adjustment</td><td style="border:1px solid var(--border); padding:8px; text-align:right; color:var(--warning); font-weight:700;">- Rs. ${stats.advanceAmount.toLocaleString()}</td></tr>
+        <tr style="background:#fef2f2; font-weight:700; font-size:16px;">
+          <td style="border:1px solid var(--border); padding:10px; color:#b91c1c;">FINAL NET SETTLEMENT PAYABLE</td>
+          <td style="border:1px solid var(--border); padding:10px; text-align:right; color:#b91c1c;">Rs. ${stats.netPayable.toLocaleString()}</td>
+        </tr>
+      </table>
+
+      <div style="display:flex; justify-content:space-between; margin-top:32px; font-size:12px; color:var(--muted);">
+        <div>Worker Signature & Thumb: ___________________</div>
+        <div>Accounts / Factory Manager: ___________________</div>
+      </div>
+    `;
+  }
+
+  function exportSettlementPDF() {
+    const element = document.getElementById('settlementCardBody');
+    const empId = document.getElementById('settleEmpSelect').value;
+    const emp = db.employees[empId] || { name: 'Worker' };
+    const opt = {
+      margin: 10, filename: `Settlement_${emp.id}_${emp.name}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().from(element).set(opt).save();
+  }
+
   function openSmartManualLogModal() {
-    populateSmartLogDropdown();
+    selectedSmartEmpIds.clear();
+    document.getElementById('smartEmpSearchInput').value = '';
+    renderSmartEmpSelectorList();
     previewSmartManualLogs();
     document.getElementById('smartManualLogModal').style.display = 'flex';
   }
 
-  function populateSmartLogDropdown() {
-    const sel = document.getElementById('smartLogEmpSelect');
-    if (!sel) return;
-    const list = getActiveEmployees();
-    sel.innerHTML = `<option value="ALL">All Employees</option>` + list.map(e => `<option value="${e.id}">${e.id} - ${e.name}</option>`).join('');
+  function renderSmartEmpSelectorList() {
+    const q = (document.getElementById('smartEmpSearchInput')?.value || '').toLowerCase();
+    const container = document.getElementById('smartEmpChipContainer');
+    const badge = document.getElementById('smartSelectedCountBadge');
+    if (!container) return;
+
+    const list = getActiveEmployees().filter(e => !q || e.name.toLowerCase().includes(q) || String(e.id).includes(q)).sort((a, b) => Number(a.id) - Number(b.id));
+
+    if (selectedSmartEmpIds.size === 0) {
+      badge.textContent = "All Employees Active (Click 'Clear All' to pick specific 5)";
+    } else {
+      badge.textContent = `${selectedSmartEmpIds.size} Employee(s) Selected`;
+    }
+
+    container.innerHTML = list.map(e => {
+      const isChecked = selectedSmartEmpIds.size === 0 || selectedSmartEmpIds.has(e.id);
+      return `
+        <label class="emp-chip ${selectedSmartEmpIds.has(e.id) ? 'selected' : ''}">
+          <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleSmartEmpSelection('${e.id}', this.checked)" />
+          <span>${e.id} - ${e.name}</span>
+        </label>
+      `;
+    }).join('');
+  }
+
+  function toggleSmartEmpSelection(empId, isChecked) {
+    if (selectedSmartEmpIds.size === 0 && !isChecked) {
+      getActiveEmployees().forEach(e => {
+        if (e.id !== empId) selectedSmartEmpIds.add(e.id);
+      });
+    } else {
+      if (isChecked) selectedSmartEmpIds.add(empId);
+      else selectedSmartEmpIds.delete(empId);
+    }
+    renderSmartEmpSelectorList();
+    previewSmartManualLogs();
+  }
+
+  function selectAllSmartEmps(selectAll) {
+    selectedSmartEmpIds.clear();
+    if (!selectAll) {
+      selectedSmartEmpIds.add('__NONE__');
+    }
+    renderSmartEmpSelectorList();
+    previewSmartManualLogs();
   }
 
   function previewSmartManualLogs() {
     const m = document.getElementById('globalMonth').value;
-    const selectedEmpId = document.getElementById('smartLogEmpSelect')?.value || 'ALL';
     const cat = document.getElementById('smartLogCategory').value;
     const shiftFilter = document.getElementById('smartLogShiftFilter').value;
     const [y, mm] = m.split('-').map(Number);
     const lastDay = new Date(y, mm, 0).getDate();
 
-    const activeEmps = getActiveEmployees().filter(e => selectedEmpId === 'ALL' || e.id === selectedEmpId);
+    const activeEmps = getActiveEmployees().filter(e => {
+      if (selectedSmartEmpIds.size === 0) return true;
+      return selectedSmartEmpIds.has(e.id);
+    });
+
     const candidates = [];
 
     activeEmps.forEach(emp => {
@@ -1426,19 +1643,21 @@
     smartManualLogCandidates = candidates;
     const tb = document.getElementById('smartManualLogPreviewBody');
     if (tb) {
-      tb.innerHTML = candidates.map((c, idx) => `
-        <tr>
-          <td><input type="checkbox" class="smart-log-chk" data-idx="${idx}" checked /></td>
-          <td>${c.id}</td>
-          <td><strong>${c.name}</strong></td>
-          <td><span class="badge ${c.shift === 'Night' ? 'b-night' : 'b-day'}">${c.shift}</span></td>
-          <td>${c.date}</td>
-          <td><span class="badge b-miss" style="background:#fee2e2; color:#b91c1c;">${c.issue}</span></td>
-          <td>${c.actual}</td>
-          <td style="color:var(--success); font-weight:700;">${c.generatedTime}</td>
-          <td>${c.punchState}</td>
-        </tr>
-      `).join('');
+      tb.innerHTML = candidates.length === 0
+        ? `<tr><td colspan="9" style="text-align:center; color:var(--muted);">No logs match selected employees/filters.</td></tr>`
+        : candidates.map((c, idx) => `
+          <tr>
+            <td><input type="checkbox" class="smart-log-chk" data-idx="${idx}" checked /></td>
+            <td>${c.id}</td>
+            <td><strong>${c.name}</strong></td>
+            <td><span class="badge ${c.shift === 'Night' ? 'b-night' : 'b-day'}">${c.shift}</span></td>
+            <td>${c.date}</td>
+            <td><span class="badge b-miss" style="background:#fee2e2; color:#b91c1c;">${c.issue}</span></td>
+            <td>${c.actual}</td>
+            <td style="color:var(--success); font-weight:700;">${c.generatedTime}</td>
+            <td>${c.punchState}</td>
+          </tr>
+        `).join('');
     }
   }
 
@@ -1476,16 +1695,12 @@
 
     const emp = db.employees[empId] || {};
     const stats = getEmpStats(empId, m);
-    const perDay = emp.salary / 30;
-    const adv = getTotalAdvanceForMonth(empId, m);
-    const cut = stats.totalAbsents * perDay;
-    const net = stats.presentDays === 0 ? 0 : Math.max(0, Math.round(emp.salary - cut - adv));
 
     container.innerHTML = `
       <div style="border-bottom: 2px solid var(--primary); padding-bottom: 12px; margin-bottom: 16px; display:flex; justify-content:space-between; align-items:center;">
         <div>
           <h2 style="margin:0; color:var(--primary);">FAFFCO PET INDUSTRIES</h2>
-          <small style="color:var(--muted);">Official Monthly Salary Slip - ${m} (30-Day Standard)</small>
+          <small style="color:var(--muted);">Official Monthly Salary Slip - ${m}</small>
         </div>
         <div style="text-align:right;">
           <strong>ID: ${emp.id}</strong><br/>
@@ -1495,22 +1710,22 @@
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; font-size:13px;">
         <div><strong>Employee Name:</strong> ${emp.name}</div>
         <div><strong>Position:</strong> ${emp.position}</div>
-        <div><strong>Category:</strong> ${emp.category}</div>
-        <div><strong>Basic Salary:</strong> Rs. ${Number(emp.salary).toLocaleString()}</div>
+        <div><strong>Hired Date:</strong> ${emp.hiredDate || '-'}</div>
+        <div><strong>Monthly Basic Salary:</strong> Rs. ${Number(emp.salary).toLocaleString()}</div>
       </div>
       <table style="width:100%; border-collapse:collapse; margin-bottom:16px; font-size:13px;">
         <tr style="background:#f8fafc;"><th style="border:1px solid var(--border); padding:8px;">Description</th><th style="border:1px solid var(--border); padding:8px; text-align:right;">Days / Value</th></tr>
-        <tr><td style="border:1px solid var(--border); padding:8px;">Standard Salary Days (Fixed)</td><td style="border:1px solid var(--border); padding:8px; text-align:right;">30 Days</td></tr>
+        <tr><td style="border:1px solid var(--border); padding:8px;">Payable Calendar Days (Pro-Rata / Standard)</td><td style="border:1px solid var(--border); padding:8px; text-align:right;">${stats.payableCalendarDays} Days (Rs. ${stats.earnedBaseSalary.toLocaleString()})</td></tr>
         <tr><td style="border:1px solid var(--border); padding:8px;">Present Days</td><td style="border:1px solid var(--border); padding:8px; text-align:right; color:var(--success); font-weight:700;">${stats.presentDays} Days</td></tr>
-        <tr><td style="border:1px solid var(--border); padding:8px;">Weekly Offs (Sundays)</td><td style="border:1px solid var(--border); padding:8px; text-align:right;">${stats.weeklyOffs} Days</td></tr>
-        <tr><td style="border:1px solid var(--border); padding:8px;">Holidays</td><td style="border:1px solid var(--border); padding:8px; text-align:right;">${stats.holidaysCount} Days</td></tr>
-        <tr><td style="border:1px solid var(--border); padding:8px;">Allowed Quota Leaves (Opening + Current)</td><td style="border:1px solid var(--border); padding:8px; text-align:right;">${stats.totalQuota} Days</td></tr>
-        <tr><td style="border:1px solid var(--border); padding:8px;">Leaves Taken / Absents</td><td style="border:1px solid var(--border); padding:8px; text-align:right; color:var(--warning); font-weight:700;">${stats.currentAbsents} Days</td></tr>
-        <tr><td style="border:1px solid var(--border); padding:8px;">Unpaid Salary Cut (Absents Exceeding Quota)</td><td style="border:1px solid var(--border); padding:8px; text-align:right; color:var(--danger); font-weight:700;">Rs. ${Math.round(cut).toLocaleString()} (${stats.totalAbsents} Days)</td></tr>
-        <tr><td style="border:1px solid var(--border); padding:8px;">Advance / Loan Taken</td><td style="border:1px solid var(--border); padding:8px; text-align:right; color:var(--warning); font-weight:700;">Rs. ${adv.toLocaleString()}</td></tr>
+        <tr><td style="border:1px solid var(--border); padding:8px;">Valid Weekly Offs (Sundays)</td><td style="border:1px solid var(--border); padding:8px; text-align:right;">${stats.weeklyOffs} Days</td></tr>
+        <tr><td style="border:1px solid var(--border); padding:8px;">Valid Holidays</td><td style="border:1px solid var(--border); padding:8px; text-align:right;">${stats.holidaysCount} Days</td></tr>
+        <tr><td style="border:1px solid var(--border); padding:8px;">Allowed Quota Used This Month</td><td style="border:1px solid var(--border); padding:8px; text-align:right;">${stats.leavesUsed} Days</td></tr>
+        <tr><td style="border:1px solid var(--border); padding:8px;">Next Month Pending Leaves Carry-Forward</td><td style="border:1px solid var(--border); padding:8px; text-align:right; color:var(--primary); font-weight:700;">${stats.nextMonthCarryLeaves} Days</td></tr>
+        <tr><td style="border:1px solid var(--border); padding:8px;">Unpaid Salary Cut (${stats.totalAbsents} Days)</td><td style="border:1px solid var(--border); padding:8px; text-align:right; color:var(--danger); font-weight:700;">Rs. ${stats.deductionAmount.toLocaleString()}</td></tr>
+        <tr><td style="border:1px solid var(--border); padding:8px;">Advance / Loan Taken</td><td style="border:1px solid var(--border); padding:8px; text-align:right; color:var(--warning); font-weight:700;">Rs. ${stats.advanceAmount.toLocaleString()}</td></tr>
         <tr style="background:#eff6ff; font-weight:700; font-size:15px;">
           <td style="border:1px solid var(--border); padding:10px;">Net Payable Salary</td>
-          <td style="border:1px solid var(--border); padding:10px; text-align:right; color:var(--primary);">Rs. ${net.toLocaleString()}</td>
+          <td style="border:1px solid var(--border); padding:10px; text-align:right; color:var(--primary);">Rs. ${stats.netPayable.toLocaleString()}</td>
         </tr>
       </table>
       <div style="display:flex; justify-content:space-between; margin-top:30px; font-size:12px; color:var(--muted);">
@@ -1526,11 +1741,10 @@
     const emp = db.employees[empId] || { name: 'Employee' };
     const m = document.getElementById('globalMonth').value;
     const opt = {
-      margin:       10,
-      filename:     `Salary_Slip_${emp.id}_${emp.name}_${m}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      margin: 10, filename: `Salary_Slip_${emp.id}_${emp.name}_${m}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
     html2pdf().from(element).set(opt).save();
   }
@@ -1561,7 +1775,6 @@
     document.getElementById('shiftWorkersModal').style.display = 'flex';
   }
 
-  // --- ACCURATE ABSENT SINCE DATE & STREAK CALCULATOR ---
   function showTodayAbsentModal() {
     const filterDate = document.getElementById('filterDate').value;
     document.getElementById('todayModalDate').textContent = filterDate;
@@ -1574,6 +1787,7 @@
 
     activeEmps.forEach(e => {
       if (e.hiredDate && e.hiredDate > filterDate) return;
+      if (e.leftDate && e.leftDate < filterDate) return;
 
       const presentIDs = getPresentIDsForDate(filterDate);
       const isSunday = dLimitObj.getDay() === 0;
@@ -1598,7 +1812,7 @@
             const wasPresent = pSet.has(e.id) || manualSt === 'Present';
             if (!wasPresent) {
               streak++;
-              actualAbsentSince = ds; // Track the earliest date in this continuous absent streak
+              actualAbsentSince = ds;
             } else {
               break; 
             }
@@ -1645,23 +1859,22 @@
     const tb = document.getElementById('leavesSummaryBody');
     if (!tb) return;
 
-    const list = getActiveEmployees().filter(e => !q || e.name.toLowerCase().includes(q) || e.id.includes(q)).sort((a, b) => Number(a.id) - Number(b.id));
+    const list = getPayrollEmployeesForMonth(m).filter(e => !q || e.name.toLowerCase().includes(q) || e.id.includes(q)).sort((a, b) => Number(a.id) - Number(b.id));
 
     tb.innerHTML = list.map(emp => {
       const stats = getEmpStats(emp.id, m);
       return `
         <tr>
           <td>${emp.id}</td>
-          <td><strong>${emp.name}</strong></td>
-          <td>${emp.position}</td>
+          <td><strong>${emp.name}</strong> ${stats.isJoinedThisMonth ? '<span class="badge b-ok">New Joiner</span>' : ''}</td>
+          <td>${emp.hiredDate || '-'}</td>
           <td style="color:var(--success); font-weight:700;">${stats.presentDays}</td>
           <td>${stats.weeklyOffs}</td>
           <td style="color:var(--primary);">${stats.holidaysCount}</td>
           <td>${stats.openingPending}</td>
           <td>${stats.currentMonthAllowedLeaves}</td>
-          <td><strong>${stats.totalQuota}</strong></td>
-          <td style="color:var(--warning); font-weight:700;">${stats.leavesUsed}</td>
-          <td style="color:var(--success); font-weight:700;">${stats.remainingBalance}</td>
+          <td style="color:var(--primary); font-weight:700;">${stats.nextMonthCarryLeaves}</td>
+          <td style="color:var(--warning); font-weight:700;">${stats.currentAbsents}</td>
           <td style="color:var(--danger); font-weight:700;">${stats.totalAbsents}</td>
         </tr>
       `;
@@ -1693,7 +1906,7 @@
 
     const [y, mm] = m.split('-').map(Number);
     const lastDay = new Date(y, mm, 0).getDate();
-    const emps = getActiveEmployees().filter(e => {
+    const emps = getPayrollEmployeesForMonth(m).filter(e => {
       if (shiftFilter !== 'ALL' && e.shift !== shiftFilter) return false;
       if (q && !e.name.toLowerCase().includes(q) && !e.id.includes(q)) return false;
       return true;
@@ -1715,7 +1928,11 @@
         let cls = 'zk-cell';
         if (isSun || isHol) cls += ' sun';
 
-        if (shiftRec) {
+        if (emp.hiredDate && ds < emp.hiredDate) {
+          timeStr = 'N/A';
+        } else if (emp.leftDate && ds > emp.leftDate) {
+          timeStr = 'LEFT';
+        } else if (shiftRec) {
           const tIn = shiftRec.rawInTime || '';
           const tOut = shiftRec.rawOutTime || '';
           timeStr = `${tIn}-${tOut}`;
@@ -1760,7 +1977,7 @@
     const shiftFilter = document.getElementById('zkGridShiftFilter').value;
     const [y, mm] = m.split('-').map(Number);
     const lastDay = new Date(y, mm, 0).getDate();
-    const emps = getActiveEmployees().filter(e => shiftFilter === 'ALL' || e.shift === shiftFilter).sort((a, b) => Number(a.id) - Number(b.id));
+    const emps = getPayrollEmployeesForMonth(m).filter(e => shiftFilter === 'ALL' || e.shift === shiftFilter).sort((a, b) => Number(a.id) - Number(b.id));
 
     const exportRows = emps.map(emp => {
       let row = { "ID": emp.id, "Name": emp.name, "Position": emp.position, "Shift": emp.shift };
@@ -1807,7 +2024,7 @@
 
     let filtered = db.processedShifts.filter(s => {
       const emp = db.employees[s.id];
-      if (!emp || (emp.status || 'Active') !== 'Active') return false;
+      if (!emp) return false;
       if (s.month !== m) return false;
       if (q && !s.name.toLowerCase().includes(q) && !s.id.includes(q)) return false;
       if (f !== 'ALL' && s.shiftType !== f) return false;
@@ -1850,6 +2067,7 @@
     const presentList = activeEmps.filter(e => presentIDs.has(e.id));
     const absentList = activeEmps.filter(e => {
       if (e.hiredDate && e.hiredDate > reportDate) return false;
+      if (e.leftDate && e.leftDate < reportDate) return false;
       if (new Date(reportDate + 'T00:00:00').getDay() === 0 || (db.holidays || []).includes(reportDate)) return false;
       return !presentIDs.has(e.id);
     });
@@ -1869,10 +2087,15 @@
     const lastDay = new Date(y, mm, 0).getDate();
 
     let rows = [];
-    getActiveEmployees().forEach(emp => {
+    getPayrollEmployeesForMonth(m).forEach(emp => {
       const hireDate = emp.hiredDate || `${m}-01`;
       const startD = Number(String(hireDate > `${m}-01` ? hireDate : `${m}-01`).slice(8, 10));
-      for (let d = startD; d <= lastDay; d++) {
+      let endD = lastDay;
+      if (emp.leftDate && String(emp.leftDate).slice(0, 7) === m) {
+        endD = Math.min(lastDay, Number(String(emp.leftDate).slice(8, 10)));
+      }
+
+      for (let d = startD; d <= endD; d++) {
         const ds = `${m}-${String(d).padStart(2,'0')}`;
         if (specificDate && ds !== specificDate) continue;
         if (new Date(ds + 'T00:00:00').getDay() === 0 || (db.holidays || []).includes(ds)) continue;
@@ -1958,6 +2181,9 @@
         db.employees[id].salary = Number(tr.querySelector('.emp-sal').value) || 0;
         db.employees[id].openingPending = Number(tr.querySelector('.emp-pend').value) || 0;
         db.employees[id].status = tr.querySelector('.emp-status').value;
+        if (db.employees[id].leftDate && db.employees[id].status === 'Active') {
+          db.employees[id].status = 'Left';
+        }
       }
     });
     if (rawPunchesMem.length > 0) reconstructShiftsExcludingOffDays();
@@ -1969,30 +2195,41 @@
     const id = document.getElementById('newEmpId').value.trim();
     const name = document.getElementById('newEmpName').value.trim();
     if (!id || !name) return alert('ID & Name required!');
-    db.employees[id] = { id, name, position: document.getElementById('newEmpPosition').value, shift: document.getElementById('newEmpShift').value, category: document.getElementById('newEmpCategory').value, salary: Number(document.getElementById('newEmpSalary').value), hiredDate: document.getElementById('newEmpHired').value, leftDate: document.getElementById('newEmpLeft').value, openingPending: Number(document.getElementById('newEmpPending').value), status: 'Active' };
+    const leftDt = document.getElementById('newEmpLeft').value;
+    db.employees[id] = { id, name, position: document.getElementById('newEmpPosition').value, shift: document.getElementById('newEmpShift').value, category: document.getElementById('newEmpCategory').value, salary: Number(document.getElementById('newEmpSalary').value), hiredDate: document.getElementById('newEmpHired').value, leftDate: leftDt, openingPending: Number(document.getElementById('newEmpPending').value), status: leftDt ? 'Left' : 'Active' };
     saveDB(); refreshDashboard(); closeModal('addEmployeeModal'); alert('Added!');
   }
 
   function renderSalarySheets() {
     const m = document.getElementById('globalMonth').value;
+    const payrollEmps = getPayrollEmployeesForMonth(m);
+
     ['Senior', 'Junior'].forEach(cat => {
       const tbody = document.getElementById(cat === 'Senior' ? 'seniorSalaryBody' : 'juniorSalaryBody');
       if (!tbody) return;
-      const list = getActiveEmployees().filter(e => e.category === cat).sort((a, b) => Number(a.id) - Number(b.id));
+      const list = payrollEmps.filter(e => e.category === cat).sort((a, b) => Number(a.id) - Number(b.id));
       tbody.innerHTML = list.map(emp => {
         const stats = getEmpStats(emp.id, m);
-        const perDay = emp.salary / 30;
-        const adv = getTotalAdvanceForMonth(emp.id, m);
-        const net = stats.presentDays === 0 ? 0 : Math.max(0, Math.round(emp.salary - (stats.totalAbsents * perDay) - adv));
+        const statusTag = stats.isLeftThisMonth ? `<span class="badge b-miss">LEFT (${emp.leftDate})</span>` : (stats.isJoinedThisMonth ? `<span class="badge b-ok">JOINED (${emp.hiredDate})</span>` : '');
 
         return `
-          <tr>
-            <td>${emp.id}</td><td><strong>${emp.name}</strong></td><td>${emp.position}</td><td>${emp.salary.toLocaleString()}</td>
-            <td>30</td><td>${stats.presentDays}</td><td>${stats.weeklyOffs}</td><td>${stats.holidaysCount}</td>
-            <td style="color:var(--primary);">${stats.medicalLeaves}</td><td>${stats.openingPending}</td><td>${stats.currentMonthAllowedLeaves}</td>
-            <td>${stats.currentAbsents}</td><td style="color:var(--danger); font-weight:700;">${stats.totalAbsents}</td>
-            <td><strong>${adv.toLocaleString()}</strong></td>
-            <td><strong>${net.toLocaleString()}</strong></td>
+          <tr style="${stats.isLeftThisMonth ? 'background:#fef2f2;' : ''}">
+            <td>${emp.id}</td>
+            <td><strong>${emp.name}</strong> ${statusTag}</td>
+            <td>${emp.position}</td>
+            <td>${emp.salary.toLocaleString()}</td>
+            <td><strong>${stats.payableCalendarDays}</strong></td>
+            <td style="color:var(--success); font-weight:700;">${stats.presentDays}</td>
+            <td>${stats.weeklyOffs}</td>
+            <td>${stats.holidaysCount}</td>
+            <td style="color:var(--primary);">${stats.medicalLeaves}</td>
+            <td>${stats.openingPending}</td>
+            <td>${stats.currentMonthAllowedLeaves}</td>
+            <td style="color:var(--primary); font-weight:700;">${stats.nextMonthCarryLeaves}</td>
+            <td>${stats.currentAbsents}</td>
+            <td style="color:var(--danger); font-weight:700;">${stats.totalAbsents}</td>
+            <td><strong>${stats.advanceAmount.toLocaleString()}</strong></td>
+            <td style="color:var(--primary); font-weight:700;">Rs. ${stats.netPayable.toLocaleString()}</td>
           </tr>
         `;
       }).join('');
@@ -2049,7 +2286,8 @@
 
   function openLeaveLedgerModal() { populateEmployeeDropdowns(); renderLeaveLedger(); document.getElementById('leaveLedgerModal').style.display = 'flex'; }
   function populateEmployeeDropdowns() {
-    const list = getActiveEmployees();
+    const m = document.getElementById('globalMonth').value;
+    const list = getPayrollEmployeesForMonth(m).sort((a, b) => Number(a.id) - Number(b.id));
     const opts = list.map(e => `<option value="${e.id}">${e.id} - ${e.name}</option>`).join('');
     if (document.getElementById('advEmpSelect')) document.getElementById('advEmpSelect').innerHTML = opts;
     if (document.getElementById('ledgerEmpSelect')) document.getElementById('ledgerEmpSelect').innerHTML = opts;
@@ -2064,6 +2302,7 @@
     const tb = document.getElementById('ledgerTableBody');
     if (!tb || !empId) return;
 
+    const emp = db.employees[empId] || {};
     let rows = [];
     for (let d = 1; d <= lastDay; d++) {
       const ds = `${m}-${String(d).padStart(2,'0')}`;
@@ -2072,7 +2311,9 @@
       const shiftRec = db.processedShifts.find(s => s.id === empId && s.dutyDate === ds);
       const manualSt = db.manualStatus[`${empId}_${ds}`] || '';
 
-      if (dObj.getDay() === 0) status = '☀️ Sunday';
+      if (emp.hiredDate && ds < emp.hiredDate) status = '⚪ Not Joined Yet';
+      else if (emp.leftDate && ds > emp.leftDate) status = '🚪 Left Factory';
+      else if (dObj.getDay() === 0) status = '☀️ Sunday';
       else if ((db.holidays || []).includes(ds)) status = '🎉 Holiday';
       else if (manualSt) status = manualSt;
       else if (shiftRec) { ci = shiftRec.checkIn; co = shiftRec.checkOut; status = shiftRec.hasIn && shiftRec.hasOut ? '✅ Present' : '⚠️ Missing'; }
@@ -2091,7 +2332,7 @@
 
     const sundayShifts = db.processedShifts.filter(s => {
       const emp = db.employees[s.id];
-      if (!emp || (emp.status || 'Active') !== 'Active') return false;
+      if (!emp) return false;
       if (s.month !== m) return false;
       return new Date(s.dutyDate + 'T00:00:00').getDay() === 0 && (s.hasIn || s.hasOut);
     });
@@ -2130,7 +2371,7 @@
     const filterDate = document.getElementById('filterDate').value;
     document.getElementById('activeModalDate').textContent = filterDate;
     const presentIDs = getPresentIDsForDate(filterDate);
-    document.getElementById('activeWorkersModalBody').innerHTML = getActiveEmployees().filter(e => presentIDs.has(e.id)).map(e => `<tr><td>${e.id}</td><td><strong>${e.name}</strong></td><td>${e.position}</td><td>${getEffectiveShiftForDate(e.id, filterDate)}</td><td><span class="badge b-day">Present</span></td></tr>`).join('');
+    document.getElementById('activeWorkersModalBody').innerHTML = Object.values(db.employees).filter(e => presentIDs.has(e.id)).map(e => `<tr><td>${e.id}</td><td><strong>${e.name}</strong></td><td>${e.position}</td><td>${getEffectiveShiftForDate(e.id, filterDate)}</td><td><span class="badge b-day">Present</span></td></tr>`).join('');
     document.getElementById('activeWorkersModal').style.display = 'flex';
   }
 
@@ -2138,7 +2379,7 @@
   function exportSalarySheet(cat) { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById(cat === 'Senior' ? 'seniorSalaryBody' : 'juniorSalaryBody').parentElement, { sheet: `${cat}_Salary` }), `${cat}_Salary.xlsx`); }
   function exportSundayDutyExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('sundayDutyBody').parentElement, { sheet: "Sunday_OT" }), "Sunday_OT.xlsx"); }
   function exportLeaveLedgerExcel() { XLSX.writeFile(XLSX.utils.table_to_book(document.getElementById('ledgerTableBody').parentElement, { sheet: "Leave_Ledger" }), "Leave_Ledger.xlsx"); }
-  function resetSystemData() { if (confirm('⚠️ WARNING: Kya aap saara data reset karna chahte hain? Ye action wapas nahi ho sakta!')) { localStorage.removeItem('factory_erp_pro_v52'); localStorage.removeItem('factory_erp_pro_v51'); localStorage.removeItem('factory_erp_pro_v50'); localStorage.removeItem('factory_erp_pro_v49'); location.reload(); } }
+  function resetSystemData() { if (confirm('⚠️ WARNING: Kya aap saara data reset karna chahte hain? Ye action wapas nahi ho sakta!')) { localStorage.removeItem('factory_erp_pro_v54'); localStorage.removeItem('factory_erp_pro_v53'); localStorage.removeItem('factory_erp_pro_v52'); localStorage.removeItem('factory_erp_pro_v51'); location.reload(); } }
 
   loadCloudDB();
   refreshDashboard();
